@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MediFly Logo Generator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      .logo-container {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        margin-bottom: 20px;
+      }
+      .instructions {
+        text-align: center;
+        max-width: 600px;
+        margin-bottom: 20px;
+      }
+      .download-btn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="instructions">
+      <h1>MediFly Logo Generator</h1>
+      <p>
+        Right-click on the logo below and save it as a PNG file named
+        "medifly-logo.png" in the same folder.
+      </p>
+    </div>
+
+    <div class="logo-container">
+      <canvas id="logoCanvas" width="200" height="200"></canvas>
+    </div>
+
+    <button class="download-btn" onclick="downloadLogo()">Download Logo</button>
+
+    <script>
+      const canvas = document.getElementById("logoCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // Draw background circle
+      ctx.beginPath();
+      ctx.arc(100, 100, 90, 0, 2 * Math.PI);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.strokeStyle = "#1e40af";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Draw medical cross
+      ctx.fillStyle = "#dc2626";
+      // Vertical part
+      ctx.fillRect(85, 40, 30, 120);
+      // Horizontal part
+      ctx.fillRect(40, 85, 120, 30);
+
+      // Draw drone rotor blades
+      ctx.fillStyle = "#1e40af";
+      // Top blade
+      ctx.fillRect(96, 20, 8, 40);
+      // Right blade
+      ctx.fillRect(140, 96, 40, 8);
+      // Bottom blade
+      ctx.fillRect(96, 140, 8, 40);
+      // Left blade
+      ctx.fillRect(20, 96, 40, 8);
+
+      // Draw center dot
+      ctx.beginPath();
+      ctx.arc(100, 100, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = "#1e40af";
+      ctx.fill();
+
+      function downloadLogo() {
+        const link = document.createElement("a");
+        link.download = "medifly-logo.png";
+        link.href = canvas.toDataURL();
+        link.click();
+      }
+    </script>
+  </body>
+</html>
