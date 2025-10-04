@@ -44,11 +44,11 @@ router.post("/cities", async (req, res) => {
 router.put("/cities/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, state, country, latitude, longitude } = req.body;
+    const { name, state, country } = req.body;
 
     const result = await pool.query(
-      "UPDATE cities SET name = COALESCE($1, name), state = COALESCE($2, state), country = COALESCE($3, country), latitude = COALESCE($4, latitude), longitude = COALESCE($5, longitude) WHERE id = $6 RETURNING *",
-      [name, state, country, latitude, longitude, id]
+      "UPDATE cities SET name = COALESCE($1, name), state = COALESCE($2, state), country = COALESCE($3, country) WHERE id = $4 RETURNING *",
+      [name, state, country, id]
     );
 
     if (result.rows.length === 0) {
@@ -139,12 +139,11 @@ router.post("/hospitals", async (req, res) => {
 router.put("/hospitals/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, city_id, address, latitude, longitude, contact_number } =
-      req.body;
+    const { name, city_id, address, contact_number } = req.body;
 
     const result = await pool.query(
-      "UPDATE hospitals SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), address = COALESCE($3, address), latitude = COALESCE($4, latitude), longitude = COALESCE($5, longitude), contact_number = COALESCE($6, contact_number) WHERE id = $7 RETURNING *",
-      [name, city_id, address, latitude, longitude, contact_number, id]
+      "UPDATE hospitals SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), address = COALESCE($3, address), contact_number = COALESCE($4, contact_number) WHERE id = $5 RETURNING *",
+      [name, city_id, address, contact_number, id]
     );
 
     if (result.rows.length === 0) {
@@ -230,11 +229,11 @@ router.post("/villages", async (req, res) => {
 router.put("/villages/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, city_id, latitude, longitude, population } = req.body;
+    const { name, city_id, population } = req.body;
 
     const result = await pool.query(
-      "UPDATE villages SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), latitude = COALESCE($3, latitude), longitude = COALESCE($4, longitude), population = COALESCE($5, population) WHERE id = $6 RETURNING *",
-      [name, city_id, latitude, longitude, population, id]
+      "UPDATE villages SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), population = COALESCE($3, population) WHERE id = $4 RETURNING *",
+      [name, city_id, population, id]
     );
 
     if (result.rows.length === 0) {
@@ -356,30 +355,22 @@ router.get("/drones", async (req, res) => {
 
 router.post("/drones", async (req, res) => {
   try {
-    const {
-      name,
-      model,
-      battery_level,
-      max_payload_kg,
-      max_range_km,
-      current_latitude,
-      current_longitude,
-    } = req.body;
+    const { name, model, battery_level, max_payload_kg, max_range_km, status } =
+      req.body;
 
     if (!name) {
       return res.status(400).json({ message: "Drone name is required" });
     }
 
     const result = await pool.query(
-      "INSERT INTO drones (name, model, battery_level, max_payload_kg, max_range_km, current_latitude, current_longitude) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      "INSERT INTO drones (name, model, battery_level, max_payload_kg, max_range_km, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
       [
         name,
         model,
         battery_level || 100,
         max_payload_kg || 5.0,
         max_range_km || 50.0,
-        current_latitude,
-        current_longitude,
+        status || "available",
       ]
     );
 
@@ -398,30 +389,12 @@ router.post("/drones", async (req, res) => {
 router.put("/drones/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      model,
-      status,
-      battery_level,
-      max_payload_kg,
-      max_range_km,
-      current_latitude,
-      current_longitude,
-    } = req.body;
+    const { name, model, status, battery_level, max_payload_kg, max_range_km } =
+      req.body;
 
     const result = await pool.query(
-      "UPDATE drones SET name = COALESCE($1, name), model = COALESCE($2, model), status = COALESCE($3, status), battery_level = COALESCE($4, battery_level), max_payload_kg = COALESCE($5, max_payload_kg), max_range_km = COALESCE($6, max_range_km), current_latitude = COALESCE($7, current_latitude), current_longitude = COALESCE($8, current_longitude) WHERE id = $9 RETURNING *",
-      [
-        name,
-        model,
-        status,
-        battery_level,
-        max_payload_kg,
-        max_range_km,
-        current_latitude,
-        current_longitude,
-        id,
-      ]
+      "UPDATE drones SET name = COALESCE($1, name), model = COALESCE($2, model), status = COALESCE($3, status), battery_level = COALESCE($4, battery_level), max_payload_kg = COALESCE($5, max_payload_kg), max_range_km = COALESCE($6, max_range_km) WHERE id = $7 RETURNING *",
+      [name, model, status, battery_level, max_payload_kg, max_range_km, id]
     );
 
     if (result.rows.length === 0) {

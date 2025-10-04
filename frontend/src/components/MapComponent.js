@@ -19,31 +19,11 @@ const MapComponent = ({
   villages,
   dronePosition,
   activeDelivery,
-  cities,
 }) => {
   const [map, setMap] = useState(null);
 
   // Center of India (Pune, Maharashtra)
   const centerPosition = [18.5204, 73.8567];
-
-  // Get coordinates for a location, falling back to city coordinates
-  const getLocationCoordinates = (location) => {
-    // If location has its own coordinates, use them
-    if (location.latitude && location.longitude) {
-      return [parseFloat(location.latitude), parseFloat(location.longitude)];
-    }
-
-    // Otherwise, use the city coordinates
-    if (location.city_id && cities) {
-      const city = cities.find((c) => c.id === location.city_id);
-      if (city && city.latitude && city.longitude) {
-        return [parseFloat(city.latitude), parseFloat(city.longitude)];
-      }
-    }
-
-    // Default to center position if no coordinates found
-    return centerPosition;
-  };
 
   // Custom icons for hospitals and villages
   const hospitalIcon = new L.Icon({
@@ -86,6 +66,17 @@ const MapComponent = ({
     }
   }, [dronePosition, map]);
 
+  // Generate random positions for hospitals and villages
+  const getMarkerPosition = (item, index) => {
+    // Create a deterministic but varied position based on the item's id or name
+    const hash = item.id
+      ? item.id
+      : item.name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const lat = centerPosition[0] + Math.sin(hash) * 0.3;
+    const lng = centerPosition[1] + Math.cos(hash) * 0.3;
+    return [lat, lng];
+  };
+
   return (
     <div className="h-96 lg:h-full rounded-lg overflow-hidden shadow-lg">
       <MapContainer
@@ -100,10 +91,10 @@ const MapComponent = ({
         />
 
         {/* Hospital markers */}
-        {hospitals.map((hospital) => (
+        {hospitals.map((hospital, index) => (
           <Marker
             key={hospital.id}
-            position={getLocationCoordinates(hospital)}
+            position={getMarkerPosition(hospital, index)}
             icon={hospitalIcon}
           >
             <Popup>
@@ -122,10 +113,10 @@ const MapComponent = ({
         ))}
 
         {/* Village markers */}
-        {villages.map((village) => (
+        {villages.map((village, index) => (
           <Marker
             key={village.id}
-            position={getLocationCoordinates(village)}
+            position={getMarkerPosition(village, index + 1000)} // Offset to avoid overlapping with hospitals
             icon={villageIcon}
           >
             <Popup>

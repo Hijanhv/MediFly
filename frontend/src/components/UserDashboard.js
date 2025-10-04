@@ -7,7 +7,6 @@ const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 const UserDashboard = () => {
   const [hospitals, setHospitals] = useState([]);
   const [villages, setVillages] = useState([]);
-  const [cities, setCities] = useState([]);
   const [medicineTypes, setMedicineTypes] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [selectedHospital, setSelectedHospital] = useState("");
@@ -27,18 +26,16 @@ const UserDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [hospitalsRes, villagesRes, citiesRes, medicineRes, deliveriesRes] =
+      const [hospitalsRes, villagesRes, medicineRes, deliveriesRes] =
         await Promise.all([
           axios.get(`${API_URL}/api/hospitals`),
           axios.get(`${API_URL}/api/villages`),
-          axios.get(`${API_URL}/api/cities`),
           axios.get(`${API_URL}/api/medicine-types`),
           axios.get(`${API_URL}/api/deliveries`),
         ]);
 
       setHospitals(hospitalsRes.data);
       setVillages(villagesRes.data);
-      setCities(citiesRes.data);
       setMedicineTypes(medicineRes.data);
       setDeliveries(deliveriesRes.data);
 
@@ -121,13 +118,11 @@ const UserDashboard = () => {
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
+  // Center of India (Pune, Maharashtra)
+  const centerPosition = [18.5204, 73.8567];
+
   const dronePosition = activeDelivery
-    ? activeDelivery.hospital_latitude && activeDelivery.hospital_longitude
-      ? [
-          parseFloat(activeDelivery.hospital_latitude),
-          parseFloat(activeDelivery.hospital_longitude),
-        ]
-      : null
+    ? centerPosition // Use center position for drone since we don't have coordinates
     : null;
 
   return (
@@ -137,7 +132,6 @@ const UserDashboard = () => {
         <MapComponent
           hospitals={hospitals}
           villages={villages}
-          cities={cities}
           dronePosition={dronePosition}
           activeDelivery={activeDelivery}
         />
