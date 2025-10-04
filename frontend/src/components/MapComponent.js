@@ -66,15 +66,13 @@ const MapComponent = ({
     }
   }, [dronePosition, map]);
 
-  // Generate random positions for hospitals and villages
-  const getMarkerPosition = (item, index) => {
-    // Create a deterministic but varied position based on the item's id or name
-    const hash = item.id
-      ? item.id
-      : item.name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const lat = centerPosition[0] + Math.sin(hash) * 0.3;
-    const lng = centerPosition[1] + Math.cos(hash) * 0.3;
-    return [lat, lng];
+  // Get marker position from database coordinates
+  const getMarkerPosition = (item) => {
+    if (item.latitude && item.longitude) {
+      return [parseFloat(item.latitude), parseFloat(item.longitude)];
+    }
+    // Fallback to center if coordinates are missing
+    return centerPosition;
   };
 
   return (
@@ -91,10 +89,10 @@ const MapComponent = ({
         />
 
         {/* Hospital markers */}
-        {hospitals.map((hospital, index) => (
+        {hospitals.map((hospital) => (
           <Marker
             key={hospital.id}
-            position={getMarkerPosition(hospital, index)}
+            position={getMarkerPosition(hospital)}
             icon={hospitalIcon}
           >
             <Popup>
@@ -113,10 +111,10 @@ const MapComponent = ({
         ))}
 
         {/* Village markers */}
-        {villages.map((village, index) => (
+        {villages.map((village) => (
           <Marker
             key={village.id}
-            position={getMarkerPosition(village, index + 1000)} // Offset to avoid overlapping with hospitals
+            position={getMarkerPosition(village)}
             icon={villageIcon}
           >
             <Popup>

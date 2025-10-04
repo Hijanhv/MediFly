@@ -20,15 +20,15 @@ router.get("/cities", async (req, res) => {
 
 router.post("/cities", async (req, res) => {
   try {
-    const { name, state, country } = req.body;
+    const { name, state, country, latitude, longitude } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ message: "City name is required" });
+    if (!name || !latitude || !longitude) {
+      return res.status(400).json({ message: "City name, latitude, and longitude are required" });
     }
 
     const result = await pool.query(
-      "INSERT INTO cities (name, state, country) VALUES ($1, $2, $3) RETURNING *",
-      [name, state, country || "India"]
+      "INSERT INTO cities (name, state, country, latitude, longitude) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [name, state, country || "India", latitude, longitude]
     );
 
     res.status(201).json(result.rows[0]);
@@ -44,11 +44,11 @@ router.post("/cities", async (req, res) => {
 router.put("/cities/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, state, country } = req.body;
+    const { name, state, country, latitude, longitude } = req.body;
 
     const result = await pool.query(
-      "UPDATE cities SET name = COALESCE($1, name), state = COALESCE($2, state), country = COALESCE($3, country) WHERE id = $4 RETURNING *",
-      [name, state, country, id]
+      "UPDATE cities SET name = COALESCE($1, name), state = COALESCE($2, state), country = COALESCE($3, country), latitude = COALESCE($4, latitude), longitude = COALESCE($5, longitude) WHERE id = $6 RETURNING *",
+      [name, state, country, latitude, longitude, id]
     );
 
     if (result.rows.length === 0) {
@@ -96,13 +96,13 @@ router.get("/hospitals", async (req, res) => {
 
 router.post("/hospitals", async (req, res) => {
   try {
-    const { name, city_id, address, contact_number } = req.body;
+    const { name, city_id, address, contact_number, latitude, longitude } = req.body;
 
     // Validate required fields
-    if (!name || !city_id) {
+    if (!name || !city_id || !latitude || !longitude) {
       return res
         .status(400)
-        .json({ message: "Hospital name and city are required" });
+        .json({ message: "Hospital name, city, latitude, and longitude are required" });
     }
 
     // Validate contact number format if provided
@@ -114,8 +114,8 @@ router.post("/hospitals", async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO hospitals (name, city_id, address, contact_number) VALUES ($1, $2, $3, $4) RETURNING *",
-      [name, city_id, address, contact_number]
+      "INSERT INTO hospitals (name, city_id, address, contact_number, latitude, longitude) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+      [name, city_id, address, contact_number, latitude, longitude]
     );
 
     res.status(201).json(result.rows[0]);
@@ -139,11 +139,11 @@ router.post("/hospitals", async (req, res) => {
 router.put("/hospitals/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, city_id, address, contact_number } = req.body;
+    const { name, city_id, address, contact_number, latitude, longitude } = req.body;
 
     const result = await pool.query(
-      "UPDATE hospitals SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), address = COALESCE($3, address), contact_number = COALESCE($4, contact_number) WHERE id = $5 RETURNING *",
-      [name, city_id, address, contact_number, id]
+      "UPDATE hospitals SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), address = COALESCE($3, address), contact_number = COALESCE($4, contact_number), latitude = COALESCE($5, latitude), longitude = COALESCE($6, longitude) WHERE id = $7 RETURNING *",
+      [name, city_id, address, contact_number, latitude, longitude, id]
     );
 
     if (result.rows.length === 0) {
@@ -191,12 +191,12 @@ router.get("/villages", async (req, res) => {
 
 router.post("/villages", async (req, res) => {
   try {
-    const { name, city_id, population } = req.body;
+    const { name, city_id, population, latitude, longitude } = req.body;
 
-    if (!name || !city_id) {
+    if (!name || !city_id || !latitude || !longitude) {
       return res
         .status(400)
-        .json({ message: "Village name and city are required" });
+        .json({ message: "Village name, city, latitude, and longitude are required" });
     }
 
     // Validate population if provided
@@ -210,8 +210,8 @@ router.post("/villages", async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO villages (name, city_id, population) VALUES ($1, $2, $3) RETURNING *",
-      [name, city_id, population]
+      "INSERT INTO villages (name, city_id, population, latitude, longitude) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [name, city_id, population, latitude, longitude]
     );
 
     res.status(201).json(result.rows[0]);
@@ -229,11 +229,11 @@ router.post("/villages", async (req, res) => {
 router.put("/villages/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, city_id, population } = req.body;
+    const { name, city_id, population, latitude, longitude } = req.body;
 
     const result = await pool.query(
-      "UPDATE villages SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), population = COALESCE($3, population) WHERE id = $4 RETURNING *",
-      [name, city_id, population, id]
+      "UPDATE villages SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), population = COALESCE($3, population), latitude = COALESCE($4, latitude), longitude = COALESCE($5, longitude) WHERE id = $6 RETURNING *",
+      [name, city_id, population, latitude, longitude, id]
     );
 
     if (result.rows.length === 0) {
