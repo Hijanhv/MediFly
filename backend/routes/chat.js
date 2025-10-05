@@ -433,25 +433,14 @@ IMPORTANT: The current user ID is ${
       }. When users ask about "my orders" or "my deliveries", use this user ID with the available tools.`,
     };
 
-    // Convert messages to model format
-    const allMessages = [
-      systemMessage,
-      ...chatHistory.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
-      ...messages,
-    ];
-
-    // Ensure all messages have the correct format
-    const validMessages = allMessages.filter(
-      (msg) => msg && msg.role && msg.content
-    );
-    const modelMessages = convertToModelMessages(validMessages);
+    // Convert messages to model format - only convert the incoming messages
+    // The system message should be passed separately
+    const modelMessages = convertToModelMessages(messages);
 
     // Generate AI response with tools
     const result = streamText({
       model: openai("gpt-4o-mini"),
+      system: systemMessage.content,
       messages: modelMessages,
       tools: availableTools,
       temperature: 0.7,
