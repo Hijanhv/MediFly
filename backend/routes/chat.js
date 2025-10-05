@@ -1,6 +1,6 @@
 const express = require("express");
 const { openai } = require("@ai-sdk/openai");
-const { streamText, tool } = require("ai");
+const { streamText, tool, convertToModelMessages, stepCountIs } = require("ai");
 const { eq, desc, and, sql } = require("drizzle-orm");
 const { v4: uuidv4 } = require("uuid");
 const db = require("../db");
@@ -344,7 +344,7 @@ router.post("/", async (req, res) => {
     await db.insert(chatMessages).values({
       sessionId: session.id,
       role: "user",
-      content: latestMessage.content,
+      content: latestMessage.content || JSON.stringify(latestMessage.parts),
     });
 
     // Get chat history for context
@@ -358,7 +358,52 @@ router.post("/", async (req, res) => {
       .orderBy(chatMessages.createdAt)
       .limit(10);
 
-    // System message for the AI agent
+    // Prepare tools based on user authentication
+    const availableTools = {};
+
+    if (userId) {
+      // Create user-specific versions of the tools that automatically include the userId
+      availableTools.getUserOrders = tool({
+        description: `Get the order history for the current user (ID: ${userId})`,
+        parameters: {
+          limit: {
+            type: "number",
+            description: "Maximum number of orders to return",
+            default: 10,
+          },
+        },
+        execute: async ({ limit = 10 }) => {
+          return getUserOrdersTool.execute({ userId, limit });
+        },
+      });
+
+      availableTools.getOrderDetails = tool({
+        description: `Get detailed information about a specific order for the current user (ID: ${userId})`,
+        parameters: {
+          orderId: {
+            type: "number",
+            description: "The ID of the order to get details for",
+          },
+        },
+        execute: async ({ orderId }) => {
+          return getOrderDetailsTool.execute({ orderId, userId });
+        },
+      });
+
+      availableTools.getDeliveryStats = tool({
+        description: `Get delivery statistics for the current user (ID: ${userId})`,
+        parameters: {},
+        execute: async () => {
+          return getDeliveryStatsTool.execute({ userId });
+        },
+      });
+    }
+
+    // Always available tools
+    availableTools.getMedicineInfo = getMedicineInfoTool;
+    availableTools.getHospitalInfo = getHospitalInfoTool;
+
+    // Convert messages to AI SDK format
     const systemMessage = {
       role: "system",
       content: `You are a helpful customer care assistant for MediFly, a drone delivery service for medical supplies. You have access to tools that can help you provide accurate information about orders, deliveries, and services.
@@ -388,71 +433,24 @@ IMPORTANT: The current user ID is ${
       }. When users ask about "my orders" or "my deliveries", use this user ID with the available tools.`,
     };
 
-    // Prepare tools based on user authentication
-    const availableTools = {};
-
-    if (userId) {
-      // Create user-specific versions of the tools that automatically include the userId
-      availableTools.getUserOrders = {
-        description: `Get the order history for the current user (ID: ${userId})`,
-        parameters: {
-          type: "object",
-          properties: {
-            limit: {
-              type: "number",
-              description: "Maximum number of orders to return",
-              default: 10,
-            },
-          },
-        },
-        execute: async ({ limit = 10 }) => {
-          return getUserOrdersTool.execute({ userId, limit });
-        },
-      };
-
-      availableTools.getOrderDetails = {
-        description: `Get detailed information about a specific order for the current user (ID: ${userId})`,
-        parameters: {
-          type: "object",
-          properties: {
-            orderId: {
-              type: "number",
-              description: "The ID of the order to get details for",
-            },
-          },
-          required: ["orderId"],
-        },
-        execute: async ({ orderId }) => {
-          return getOrderDetailsTool.execute({ orderId, userId });
-        },
-      };
-
-      availableTools.getDeliveryStats = {
-        description: `Get delivery statistics for the current user (ID: ${userId})`,
-        parameters: {
-          type: "object",
-          properties: {},
-        },
-        execute: async () => {
-          return getDeliveryStatsTool.execute({ userId });
-        },
-      };
-    }
-
-    // Always available tools
-    availableTools.getMedicineInfo = getMedicineInfoTool;
-    availableTools.getHospitalInfo = getHospitalInfoTool;
-
-    // Convert messages to AI SDK format
-    const allMessages = [systemMessage, ...chatHistory, ...messages.slice(-1)];
+    // Convert messages to model format
+    const modelMessages = convertToModelMessages([
+      systemMessage,
+      ...chatHistory.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      })),
+      ...messages,
+    ]);
 
     // Generate AI response with tools
     const result = streamText({
       model: openai("gpt-4o-mini"),
-      messages: allMessages,
+      messages: modelMessages,
       tools: availableTools,
       temperature: 0.7,
       maxOutputTokens: 500,
+      stopWhen: stepCountIs(5), // Allow multi-step tool calls
     });
 
     // Store assistant message when complete
@@ -469,7 +467,18 @@ IMPORTANT: The current user ID is ${
     };
 
     // Return the stream response with session token
-    const streamResponse = result.toUIMessageStreamResponse();
+    const streamResponse = result.toUIMessageStreamResponse({
+      onError: (error) => {
+        console.error("Stream error:", error);
+        if (error.name === "NoSuchToolError") {
+          return "The model tried to call an unknown tool.";
+        } else if (error.name === "InvalidToolInputError") {
+          return "The model called a tool with invalid inputs.";
+        } else {
+          return "An unknown error occurred.";
+        }
+      },
+    });
 
     // Add session token to response headers
     streamResponse.headers.set("X-Session-Token", session.sessionToken);

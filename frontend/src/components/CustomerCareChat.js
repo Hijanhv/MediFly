@@ -14,18 +14,26 @@ const CustomerCareChat = () => {
   const inputRef = useRef(null);
 
   // Initialize chat with session token
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, stop } = useChat({
     api: `${API_URL}/api/chat`,
     body: {
       sessionToken,
       userId: user?.id,
     },
-    onFinish: (message, { responseHeaders }) => {
+    onFinish: (message) => {
+      // Session token is now handled in the response headers
+      // The onFinish callback provides the completed message
+      console.log("Message completed:", message);
+    },
+    onResponse: (response) => {
       // Extract session token from response headers
-      const newSessionToken = responseHeaders?.get?.("X-Session-Token");
+      const newSessionToken = response.headers.get("X-Session-Token");
       if (newSessionToken && !sessionToken) {
         setSessionToken(newSessionToken);
       }
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
     },
   });
 
@@ -57,9 +65,13 @@ const CustomerCareChat = () => {
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      sendMessage(inputValue);
+      sendMessage({ text: inputValue });
       setInputValue("");
     }
+  };
+
+  const handleStop = () => {
+    stop();
   };
 
   // Don't render if user is not logged in
@@ -202,16 +214,40 @@ const CustomerCareChat = () => {
                               : "bg-white border border-gray-200 text-gray-800"
                           }`}
                         >
-                          {message.parts?.map((part, index) => (
-                            <div key={index}>
-                              {part.type === "text" && (
-                                <p className="text-sm whitespace-pre-wrap">
+                          {message.parts?.map((part, index) => {
+                            if (part.type === "text") {
+                              return (
+                                <p
+                                  key={index}
+                                  className="text-sm whitespace-pre-wrap"
+                                >
                                   {part.text}
                                 </p>
-                              )}
-                            </div>
-                          ))}
-                          {message.content && (
+                              );
+                            }
+                            if (part.type === "tool-call") {
+                              return (
+                                <div
+                                  key={index}
+                                  className="text-xs text-gray-500 mt-1"
+                                >
+                                  🔧 Using tool: {part.toolName}
+                                </div>
+                              );
+                            }
+                            if (part.type === "tool-result") {
+                              return (
+                                <div
+                                  key={index}
+                                  className="text-xs text-gray-500 mt-1"
+                                >
+                                  ✅ Tool result: {part.toolName}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+                          {message.content && !message.parts && (
                             <p className="text-sm whitespace-pre-wrap">
                               {message.content}
                             </p>
@@ -253,26 +289,49 @@ const CustomerCareChat = () => {
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                     disabled={isLoading}
                   />
-                  <button
-                    type="submit"
-                    disabled={isLoading || !inputValue.trim()}
-                    className="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    aria-label="Send message"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  {isLoading ? (
+                    <button
+                      type="button"
+                      onClick={handleStop}
+                      className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+                      aria-label="Stop generation"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={isLoading || !inputValue.trim()}
+                      className="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      aria-label="Send message"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                        />
+                      </svg>
+                    </button>
+                  )}
                 </form>
               </div>
             </>
