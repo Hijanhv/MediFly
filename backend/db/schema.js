@@ -106,8 +106,7 @@ const chatSessions = pgTable("chat_sessions", {
 const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
   sessionId: integer("session_id")
-    .references(() => chatSessions.id)
-    .onDelete("cascade"),
+    .references(() => chatSessions.id, { onDelete: "cascade" }),
   role: varchar("role", { length: 20 }).notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
