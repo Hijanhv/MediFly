@@ -1,4 +1,13 @@
-const { pgTable, serial, text, varchar, timestamp, integer, decimal, boolean } = require("drizzle-orm/pg-core");
+const {
+  pgTable,
+  serial,
+  text,
+  varchar,
+  timestamp,
+  integer,
+  decimal,
+  boolean,
+} = require("drizzle-orm/pg-core");
 
 const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -60,7 +69,9 @@ const deliveries = pgTable("deliveries", {
   id: serial("id").primaryKey(),
   hospitalId: integer("hospital_id").references(() => hospitals.id),
   villageId: integer("village_id").references(() => villages.id),
-  medicineTypeId: integer("medicine_type_id").references(() => medicineTypes.id),
+  medicineTypeId: integer("medicine_type_id").references(
+    () => medicineTypes.id
+  ),
   userId: integer("user_id").references(() => users.id),
   operatorId: integer("operator_id").references(() => users.id),
   droneId: integer("drone_id").references(() => drones.id),
@@ -75,6 +86,33 @@ const deliveries = pgTable("deliveries", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+const knowledgeBase = pgTable("knowledge_base", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  category: varchar("category", { length: 100 }).default("general"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+const chatSessions = pgTable("chat_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  sessionToken: varchar("session_token", { length: 255 }).notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  sessionId: integer("session_id")
+    .references(() => chatSessions.id)
+    .onDelete("cascade"),
+  role: varchar("role", { length: 20 }).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 module.exports = {
   users,
   cities,
@@ -83,4 +121,7 @@ module.exports = {
   medicineTypes,
   drones,
   deliveries,
+  knowledgeBase,
+  chatSessions,
+  chatMessages,
 };

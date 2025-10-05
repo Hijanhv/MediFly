@@ -288,3 +288,64 @@ BEGIN
     RETURN r * c;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
+
+-- Create tables for RAG-based customer care chat system
+
+-- Knowledge base articles/documents (for general information, not used in AI agent)
+CREATE TABLE IF NOT EXISTS knowledge_base (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    category VARCHAR(100) DEFAULT 'general',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Chat sessions
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    session_token VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Chat messages
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id SERIAL PRIMARY KEY,
+    session_id INTEGER REFERENCES chat_sessions(id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant')),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert initial knowledge base entries for MediFly customer care
+INSERT INTO knowledge_base (title, content, category) VALUES
+('About MediFly', 'MediFly is a revolutionary drone delivery service that specializes in transporting medical supplies, including medicines, vaccines, blood packs, and other critical healthcare items. We use advanced drone technology to deliver essential medical supplies to hospitals, villages, and remote areas quickly and efficiently.', 'about'),
+('Delivery Process', 'Our delivery process is simple and efficient: 1) Order placement through our platform, 2) Drone assignment and preparation, 3) Pickup from hospital/pharmacy, 4) Transit to destination, 5) Safe delivery. Each delivery is tracked in real-time and our system provides estimated arrival times.', 'process'),
+('Delivery Time', 'Standard deliveries typically take 15-30 minutes depending on distance. Emergency deliveries are prioritized and can be completed within 10-20 minutes. Delivery times vary based on weather conditions, distance, and order priority.', 'timing'),
+('Coverage Areas', 'MediFly currently operates in major cities including Pune, Mumbai, Delhi, Bangalore, Chennai, Kolkata, Hyderabad, Ahmedabad, Jaipur, and Lucknow. We serve both urban hospitals and surrounding villages/suburbs within a 50km radius.', 'coverage'),
+('Medicine Types', 'We deliver various types of medical supplies including: Insulin, Vaccines, Blood Packs, Antibiotics, Pain Killers, Antivirals, Heart Medication, Allergy Medicine, Cancer Drugs, and Vitamins. Some items require refrigeration and are handled with special care.', 'products'),
+('Emergency Deliveries', 'For emergency deliveries, we prioritize your order and assign the nearest available drone. Emergency orders are marked with high priority and have the shortest delivery times. You can specify emergency status when placing your order.', 'emergency'),
+('Order Tracking', 'Once your order is placed, you can track it in real-time through our platform. The system shows the drone''s current location, estimated arrival time, and delivery status updates.', 'tracking'),
+('Payment Methods', 'We accept various payment methods including credit/debit cards, digital wallets, and hospital billing accounts. Payment is processed securely through our platform.', 'payment'),
+('Delivery Charges', 'Delivery charges vary based on distance, urgency, and item type. Standard deliveries start at ₹200, while emergency deliveries have additional charges. Hospitals with bulk orders may receive special pricing.', 'pricing'),
+('Safety Measures', 'All our drones are equipped with GPS tracking, collision avoidance systems, and temperature control for sensitive medical supplies. Our pilots are certified and follow strict safety protocols.', 'safety'),
+('Customer Support', 'Our customer support team is available 24/7 to help with your orders, tracking, and any issues. You can reach us through this chat, email at support@medifly.com, or call our helpline.', 'support'),
+('Technical Requirements', 'Orders can be placed through our web platform or mobile app. You need to provide delivery location, hospital information, medicine type, and urgency level.', 'technical')
+ON CONFLICT (title) DO NOTHING;
+
+
+-- Create indexes for better query performance
+CREATE INDEX idx_chat_sessions_user_id ON chat_sessions(user_id);
+CREATE INDEX idx_chat_sessions_token ON chat_sessions(session_token);
+CREATE INDEX idx_chat_messages_session_id ON chat_messages(session_id);
+CREATE INDEX idx_chat_messages_created_at ON chat_messages(created_at DESC);
+CREATE INDEX idx_knowledge_base_category ON knowledge_base(category);
+
+-- Create triggers for updated_at
+CREATE TRIGGER update_knowledge_base_updated_at BEFORE UPDATE ON knowledge_base
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_chat_sessions_updated_at BEFORE UPDATE ON chat_sessions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

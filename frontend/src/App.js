@@ -10,6 +10,7 @@ import Header from "./components/Header";
 import UserDashboard from "./components/UserDashboard";
 import OperatorPanel from "./components/OperatorPanel";
 import AdminPanel from "./components/AdminPanel";
+import CustomerCareChat from "./components/CustomerCareChat";
 import "./index.css";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -70,6 +71,7 @@ const AppContent = () => {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      {user && <CustomerCareChat />}
     </div>
   );
 };

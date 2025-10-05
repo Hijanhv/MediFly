@@ -21,11 +21,13 @@ const authRoutes = require("./routes/auth");
 const adminRoutes = require("./routes/admin");
 const deliveryRoutes = require("./routes/deliveries");
 const publicRoutes = require("./routes/public");
+const chatRoutes = require("./routes/chat");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/deliveries", deliveryRoutes);
 app.use("/api", publicRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Health check
 app.get("/health", async (req, res) => {
