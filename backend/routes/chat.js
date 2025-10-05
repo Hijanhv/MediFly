@@ -1,6 +1,6 @@
 const express = require("express");
 const { openai } = require("@ai-sdk/openai");
-const { convertToModelMessages, streamText, tool, stepCountIs } = require("ai");
+const { streamText, tool } = require("ai");
 const { eq, desc, and, sql } = require("drizzle-orm");
 const { v4: uuidv4 } = require("uuid");
 const db = require("../db");
@@ -448,12 +448,11 @@ IMPORTANT: The current user ID is ${
 
     // Generate AI response with tools
     const result = streamText({
-      model: openai("gpt-3.5-turbo"),
-      messages: convertToModelMessages(allMessages),
+      model: openai("gpt-4o-mini"),
+      messages: allMessages,
       tools: availableTools,
       temperature: 0.7,
-      maxTokens: 500,
-      stopWhen: stepCountIs(5), // Limit to 5 tool calls to prevent infinite loops
+      maxOutputTokens: 500,
     });
 
     // Store assistant message when complete

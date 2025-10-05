@@ -9,26 +9,27 @@ const CustomerCareChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [sessionToken, setSessionToken] = useState(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
   // Initialize chat with session token
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat({
-      api: `${API_URL}/api/chat`,
-      initialMessages: [],
-      body: {
-        sessionToken,
-        userId: user?.id,
-      },
-      onResponse: (response) => {
-        // Extract session token from response headers
-        const newSessionToken = response.headers.get("X-Session-Token");
-        if (newSessionToken && !sessionToken) {
-          setSessionToken(newSessionToken);
-        }
-      },
-    });
+  const { messages, sendMessage, status } = useChat({
+    api: `${API_URL}/api/chat`,
+    body: {
+      sessionToken,
+      userId: user?.id,
+    },
+    onFinish: (message, { responseHeaders }) => {
+      // Extract session token from response headers
+      const newSessionToken = responseHeaders?.get?.("X-Session-Token");
+      if (newSessionToken && !sessionToken) {
+        setSessionToken(newSessionToken);
+      }
+    },
+  });
+
+  const isLoading = status === "streaming" || status === "submitted";
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -55,8 +56,9 @@ const CustomerCareChat = () => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    if (input.trim()) {
-      handleSubmit(e);
+    if (inputValue.trim()) {
+      sendMessage(inputValue);
+      setInputValue("");
     }
   };
 
@@ -245,15 +247,15 @@ const CustomerCareChat = () => {
                   <input
                     ref={inputRef}
                     type="text"
-                    value={input}
-                    onChange={handleInputChange}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
                     placeholder="Ask about your deliveries..."
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                     disabled={isLoading}
                   />
                   <button
                     type="submit"
-                    disabled={isLoading || !input.trim()}
+                    disabled={isLoading || !inputValue.trim()}
                     className="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     aria-label="Send message"
                   >
