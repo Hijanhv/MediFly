@@ -13,16 +13,22 @@ The default values in `.env` are fine for local development.
 ### Step 2: Start Docker Services
 
 ```bash
-docker compose up --build
+docker-compose up -d --build
 ```
 
 This will:
 - Build the backend and frontend containers
 - Start PostgreSQL database
 - Initialize the database with schema
-- Start all services
+- Start all services in detached mode
 
-**Wait for**: `🚁 MediFly backend server running on port 5000`
+**Wait for**: `MediFly backend server running on port 5000`
+
+Check status:
+```bash
+docker-compose ps
+docker-compose logs backend
+```
 
 ### Step 3: Access the Application
 
@@ -112,10 +118,14 @@ Role: User
 
 ```bash
 # Stop services but keep data
-docker compose down
+docker-compose down
 
-# Stop services and remove data
-docker compose down -v
+# Stop services and remove all data (fresh start)
+docker-compose down -v
+
+# View logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
 ```
 
 ## 🔧 Troubleshooting
@@ -123,10 +133,13 @@ docker compose down -v
 ### Database Connection Issues
 ```bash
 # Check if database is healthy
-docker compose ps
+docker-compose ps
 
 # View backend logs
-docker compose logs backend
+docker-compose logs backend
+
+# Restart backend only
+docker-compose restart backend
 ```
 
 ### Port Already in Use
@@ -136,10 +149,27 @@ BACKEND_PORT=5001
 FRONTEND_PORT=3001
 ```
 
+Then restart:
+```bash
+docker-compose down
+docker-compose up -d --build
+```
+
+### Backend Keeps Restarting (bcrypt/native module errors)
+This usually means volume mounts are mixing macOS and Linux binaries.
+
+**Fix**: The current `docker-compose.yml` is already configured correctly without volume mounts for production. If you see this error:
+
+```bash
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
 ### Reset Everything
 ```bash
-docker compose down -v
-docker compose up --build
+docker-compose down -v
+docker-compose up -d --build
 ```
 
 ## 📚 API Documentation

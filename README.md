@@ -41,10 +41,10 @@ A complete full-stack web application for drone-based medical aid delivery with 
 
 ### Backend
 - Node.js & Express.js
-- PostgreSQL with pg driver
+- PostgreSQL with Drizzle ORM
 - JWT for authentication
 - bcrypt for password hashing
-- Docker
+- Docker & Docker Compose
 
 ### Frontend
 - React 18
@@ -56,12 +56,23 @@ A complete full-stack web application for drone-based medical aid delivery with 
 ## Project Structure
 
 ```
-mediFly/
+MediFly/
 ├── backend/
+│   ├── db/
+│   │   ├── index.js           # Drizzle ORM connection
+│   │   └── schema.js          # Database schema
+│   ├── middleware/
+│   │   └── auth.js            # JWT authentication & RBAC
+│   ├── routes/
+│   │   ├── auth.js            # Auth endpoints
+│   │   ├── admin.js           # Admin CRUD endpoints
+│   │   ├── deliveries.js      # Delivery management
+│   │   └── public.js          # Public data endpoints
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── package.json
-│   └── server.js
+│   └── server.js              # Express server
 ├── frontend/
-│   ├── package.json
 │   ├── public/
 │   │   └── index.html
 │   ├── src/
@@ -72,10 +83,17 @@ mediFly/
 │   │   ├── App.js
 │   │   ├── index.css
 │   │   └── index.js
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   ├── tailwind.config.js
-│   └── postcss.config.js
-├── package.json
-└── README.md
+│   └── package.json
+├── initdb/
+│   └── init.sql               # Database initialization
+├── docker-compose.yml         # Production-ready Docker setup
+├── .env                       # Environment variables
+├── .env.example               # Environment template
+├── README.md
+└── SETUP_GUIDE.md
 ```
 
 ## Setup Instructions
@@ -90,17 +108,19 @@ mediFly/
 1. **Clone the repository**
 ```bash
 git clone <your-repo>
-cd mediFly
+cd MediFly
 ```
 
 2. **Create environment file**
 ```bash
-cp env.example .env
+cp .env.example .env
 ```
+
+Edit `.env` and change `JWT_SECRET` for production.
 
 3. **Start all services**
 ```bash
-docker compose up --build
+docker-compose up -d --build
 ```
 
 This will start:
@@ -112,6 +132,12 @@ This will start:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5000
 - Health check: http://localhost:5000/health
+
+5. **Check status**
+```bash
+docker-compose ps
+docker-compose logs backend
+```
 
 ## 🔐 Getting Started
 
@@ -168,85 +194,88 @@ See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for detailed setup instructions.
 6. Monitor the delivery status and ETA in the side panel
 7. View delivery history at the bottom of the panel
 
-## Sample Data
+## 🗄️ Database Management
 
-The application includes hardcoded sample data for:
+All data is managed through the Admin Panel in the web interface:
 
-- **Hospitals**: Sassoon General Hospital, KEM Hospital (Pune), Mayo Hospital, Government Medical College (Nagpur)
-- **Villages**: Wagholi, Hadapsar, Kharadi (Pune), Kamptee, Umred, Hingna (Nagpur)
-- **Drones**: 4 MediDrones with different battery levels and statuses
-- **Medicine Types**: Insulin, Vaccine, Blood Pack
+- **Cities**: Add cities with GPS coordinates
+- **Hospitals**: Configure hospital locations and contact info
+- **Villages**: Set up delivery destinations
+- **Medicine Types**: Define available medicines
+- **Drones**: Manage drone fleet status
 
-## Customization
+No need to edit code - everything is database-driven!
 
-### Adding New Locations
+## 🚢 Production Deployment
 
-To add new hospitals or villages, modify the arrays in `backend/server.js`:
+This setup is production-ready with:
+- ✅ No volume mounts (prevents local dependency conflicts)
+- ✅ `.dockerignore` files (excludes node_modules)
+- ✅ Health checks for database
+- ✅ Proper container dependencies
+- ✅ Environment-based configuration
 
-```javascript
-const hospitals = [
-  {
-    id: 1,
-    name: "Hospital Name",
-    city: "City",
-    coordinates: [latitude, longitude],
-  },
-  // Add more hospitals...
-];
-
-const villages = [
-  {
-    id: 1,
-    name: "Village Name",
-    city: "City",
-    coordinates: [latitude, longitude],
-  },
-  // Add more villages...
-];
-```
-
-### Changing Map Center
-
-To change the default map center, modify `centerPosition` in `frontend/src/components/MapComponent.js`:
-
-```javascript
-const centerPosition = [latitude, longitude];
-```
-
-### Customizing Colors
-
-To customize the medical theme colors, modify `tailwind.config.js`:
-
-```javascript
-theme: {
-  extend: {
-    colors: {
-      'medical-blue': '#0066cc',
-      'medical-red': '#dc2626',
-      'medical-light': '#f0f9ff',
-    },
-  },
-},
+For production, update `.env`:
+```bash
+NODE_ENV=production
+JWT_SECRET=<strong-random-secret>
+POSTGRES_PASSWORD=<strong-password>
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Port already in use**: If port 5000 or 3000 is already in use, the servers will automatically try the next available port.
+1. **Port already in use**:
+```bash
+# Edit .env to change ports
+BACKEND_PORT=5001
+FRONTEND_PORT=3001
+# Then restart
+docker-compose down && docker-compose up -d --build
+```
 
-2. **CORS errors**: Make sure the backend server is running before starting the frontend.
+2. **Backend keeps restarting**:
+```bash
+# Check logs
+docker-compose logs backend
 
-3. **Map not loading**: Check your internet connection as the map tiles are loaded from OpenStreetMap servers.
+# Common fix: Rebuild without cache
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
 
-4. **Drone animation not working**: Ensure all dependencies are properly installed and the backend server is running.
+3. **Database connection errors**:
+```bash
+# Check database health
+docker-compose ps
+# Should show postgres as "healthy"
+
+# Reset database
+docker-compose down -v
+docker-compose up -d
+```
+
+4. **Map not loading**: Check internet connection (map tiles from OpenStreetMap)
 
 ### Development Mode
 
-For development with hot reload:
+For development with hot reload (not recommended for production):
 
-- Frontend: React development server automatically reloads on file changes
-- Backend: Use `npm run dev` in the backend directory for nodemon auto-restart
+Add volume mounts back to `docker-compose.yml`:
+```yaml
+backend:
+  volumes:
+    - ./backend:/app
+    - /app/node_modules
+```
+
+Or run locally:
+```bash
+cd backend && npm run dev
+cd frontend && npm start
+```
 
 ## License
 
