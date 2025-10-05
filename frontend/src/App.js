@@ -1,12 +1,17 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './components/Login';
-import Header from './components/Header';
-import UserDashboard from './components/UserDashboard_new';
-import OperatorPanel from './components/OperatorPanel';
-import AdminPanel from './components/AdminPanel';
-import './index.css';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Login from "./components/Login";
+import Header from "./components/Header";
+import UserDashboard from "./components/UserDashboard_new";
+import OperatorPanel from "./components/OperatorPanel";
+import AdminPanel from "./components/AdminPanel";
+import "./index.css";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -42,16 +47,16 @@ const AppContent = () => {
           path="/"
           element={
             <ProtectedRoute>
-              {user?.role === 'admin' && <AdminPanel />}
-              {user?.role === 'operator' && <OperatorPanel />}
-              {user?.role === 'user' && <UserDashboard />}
+              {user?.role === "admin" && <AdminPanel />}
+              {user?.role === "operator" && <OperatorPanel />}
+              {user?.role === "user" && <UserDashboard />}
             </ProtectedRoute>
           }
         />
         <Route
           path="/admin"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={["admin"]}>
               <AdminPanel />
             </ProtectedRoute>
           }
@@ -59,7 +64,7 @@ const AppContent = () => {
         <Route
           path="/operator"
           element={
-            <ProtectedRoute allowedRoles={['operator', 'admin']}>
+            <ProtectedRoute allowedRoles={["operator", "admin"]}>
               <OperatorPanel />
             </ProtectedRoute>
           }

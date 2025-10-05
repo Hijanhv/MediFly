@@ -11,7 +11,6 @@
 
 body {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%);
-  background-image: url('/doodle-background.svg');
   background-size: cover;
   background-attachment: fixed;
   background-position: center;
@@ -434,8 +433,6 @@ body {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   border: 2px solid rgba(255, 255, 255, 0.3);
-}
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Icon animations */

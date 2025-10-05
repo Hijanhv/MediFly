@@ -256,10 +256,9 @@ router.patch(
       }
 
       // Update drone status
-      await pool.query(
-        "UPDATE drones SET status = 'delivering' WHERE id = ?",
-        [drone.id]
-      );
+      await pool.query("UPDATE drones SET status = 'delivering' WHERE id = ?", [
+        drone.id,
+      ]);
 
       res.json(result.rows[0]);
     } catch (error) {

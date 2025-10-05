@@ -362,9 +362,11 @@ const pool = {
             resolve({ rows: rows || [] });
           }
         });
-      } else if (sqliteQuery.toUpperCase().includes("INSERT") ||
-                 sqliteQuery.toUpperCase().includes("UPDATE") ||
-                 sqliteQuery.toUpperCase().includes("DELETE")) {
+      } else if (
+        sqliteQuery.toUpperCase().includes("INSERT") ||
+        sqliteQuery.toUpperCase().includes("UPDATE") ||
+        sqliteQuery.toUpperCase().includes("DELETE")
+      ) {
         db.run(sqliteQuery, params, function (err) {
           if (err) {
             console.error(
