@@ -14,7 +14,7 @@ const CustomerCareChat = () => {
   const inputRef = useRef(null);
 
   // Initialize chat with session token
-  const { messages, sendMessage, status, stop } = useChat({
+  const { messages, append, status, stop } = useChat({
     api: `${API_URL}/api/chat`,
     body: {
       sessionToken,
@@ -65,7 +65,7 @@ const CustomerCareChat = () => {
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (inputValue.trim()) {
-      sendMessage({ text: inputValue });
+      append({ role: "user", content: inputValue });
       setInputValue("");
     }
   };
