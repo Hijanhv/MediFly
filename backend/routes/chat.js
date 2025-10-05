@@ -1,6 +1,17 @@
 const express = require("express");
-const { openai } = require("@ai-sdk/openai");
-const { streamText, tool, convertToModelMessages, stepCountIs } = require("ai");
+const { createOpenAI } = require("@ai-sdk/openai");
+const {
+  streamText,
+  tool,
+  convertToModelMessages,
+  jsonSchema,
+  stepCountIs,
+} = require("ai");
+
+// Initialize OpenAI provider
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 const { eq, desc, and, sql } = require("drizzle-orm");
 const { v4: uuidv4 } = require("uuid");
 const db = require("../db");
@@ -46,18 +57,21 @@ async function getOrCreateSession(sessionToken, userId = null) {
 // Define tools for the AI agent
 const getUserOrdersTool = tool({
   description: "Get the order history for a specific user",
-  parameters: {
-    userId: {
-      type: "number",
-      description: "The ID of the user to get orders for",
-      required: true,
+  inputSchema: jsonSchema({
+    type: "object",
+    properties: {
+      userId: {
+        type: "number",
+        description: "The ID of the user to get orders for",
+      },
+      limit: {
+        type: "number",
+        description: "Maximum number of orders to return",
+        default: 10,
+      },
     },
-    limit: {
-      type: "number",
-      description: "Maximum number of orders to return",
-      default: 10,
-    },
-  },
+    required: ["userId"],
+  }),
   execute: async ({ userId, limit = 10 }) => {
     try {
       const userOrders = await db
@@ -107,18 +121,20 @@ const getUserOrdersTool = tool({
 
 const getOrderDetailsTool = tool({
   description: "Get detailed information about a specific order",
-  parameters: {
-    orderId: {
-      type: "number",
-      description: "The ID of the order to get details for",
-      required: true,
+  inputSchema: jsonSchema({
+    type: "object",
+    properties: {
+      orderId: {
+        type: "number",
+        description: "The ID of the order to get details for",
+      },
+      userId: {
+        type: "number",
+        description: "The ID of the user making the request (for security)",
+      },
     },
-    userId: {
-      type: "number",
-      description: "The ID of the user making the request (for security)",
-      required: true,
-    },
-  },
+    required: ["orderId", "userId"],
+  }),
   execute: async ({ orderId, userId }) => {
     try {
       const orderDetails = await db
@@ -179,13 +195,16 @@ const getOrderDetailsTool = tool({
 
 const getMedicineInfoTool = tool({
   description: "Get information about available medicine types",
-  parameters: {
-    medicineName: {
-      type: "string",
-      description: "Name of the medicine to search for (optional)",
-      required: false,
+  inputSchema: jsonSchema({
+    type: "object",
+    properties: {
+      medicineName: {
+        type: "string",
+        description: "Name of the medicine to search for (optional)",
+      },
     },
-  },
+    required: [],
+  }),
   execute: async ({ medicineName }) => {
     try {
       let query = db.select().from(medicineTypes);
@@ -215,18 +234,20 @@ const getMedicineInfoTool = tool({
 
 const getHospitalInfoTool = tool({
   description: "Get information about hospitals in the system",
-  parameters: {
-    hospitalName: {
-      type: "string",
-      description: "Name of the hospital to search for (optional)",
-      required: false,
+  inputSchema: jsonSchema({
+    type: "object",
+    properties: {
+      hospitalName: {
+        type: "string",
+        description: "Name of the hospital to search for (optional)",
+      },
+      cityId: {
+        type: "number",
+        description: "Filter hospitals by city ID (optional)",
+      },
     },
-    cityId: {
-      type: "number",
-      description: "Filter hospitals by city ID (optional)",
-      required: false,
-    },
-  },
+    required: [],
+  }),
   execute: async ({ hospitalName, cityId }) => {
     try {
       let query = db
@@ -272,13 +293,16 @@ const getHospitalInfoTool = tool({
 
 const getDeliveryStatsTool = tool({
   description: "Get delivery statistics for a user",
-  parameters: {
-    userId: {
-      type: "number",
-      description: "The ID of the user to get stats for",
-      required: true,
+  inputSchema: jsonSchema({
+    type: "object",
+    properties: {
+      userId: {
+        type: "number",
+        description: "The ID of the user to get stats for",
+      },
     },
-  },
+    required: ["userId"],
+  }),
   execute: async ({ userId }) => {
     try {
       const stats = await db
@@ -325,9 +349,11 @@ const getDeliveryStatsTool = tool({
 // POST /api/chat - Main chat endpoint with AI agent
 router.post("/", async (req, res) => {
   try {
+    console.log("Received request body:", JSON.stringify(req.body, null, 2));
     const { messages, sessionToken, userId } = req.body;
 
     if (!messages || messages.length === 0) {
+      console.error("Messages missing or empty:", messages);
       return res.status(400).json({ error: "Messages are required" });
     }
 
@@ -348,15 +374,6 @@ router.post("/", async (req, res) => {
     });
 
     // Get chat history for context
-    const chatHistory = await db
-      .select({
-        role: chatMessages.role,
-        content: chatMessages.content,
-      })
-      .from(chatMessages)
-      .where(eq(chatMessages.sessionId, session.id))
-      .orderBy(chatMessages.createdAt)
-      .limit(10);
 
     // Prepare tools based on user authentication
     const availableTools = {};
@@ -365,13 +382,17 @@ router.post("/", async (req, res) => {
       // Create user-specific versions of the tools that automatically include the userId
       availableTools.getUserOrders = tool({
         description: `Get the order history for the current user (ID: ${userId})`,
-        parameters: {
-          limit: {
-            type: "number",
-            description: "Maximum number of orders to return",
-            default: 10,
+        inputSchema: jsonSchema({
+          type: "object",
+          properties: {
+            limit: {
+              type: "number",
+              description: "Maximum number of orders to return",
+              default: 10,
+            },
           },
-        },
+          required: [],
+        }),
         execute: async ({ limit = 10 }) => {
           return getUserOrdersTool.execute({ userId, limit });
         },
@@ -379,12 +400,16 @@ router.post("/", async (req, res) => {
 
       availableTools.getOrderDetails = tool({
         description: `Get detailed information about a specific order for the current user (ID: ${userId})`,
-        parameters: {
-          orderId: {
-            type: "number",
-            description: "The ID of the order to get details for",
+        inputSchema: jsonSchema({
+          type: "object",
+          properties: {
+            orderId: {
+              type: "number",
+              description: "The ID of the order to get details for",
+            },
           },
-        },
+          required: ["orderId"],
+        }),
         execute: async ({ orderId }) => {
           return getOrderDetailsTool.execute({ orderId, userId });
         },
@@ -392,7 +417,11 @@ router.post("/", async (req, res) => {
 
       availableTools.getDeliveryStats = tool({
         description: `Get delivery statistics for the current user (ID: ${userId})`,
-        parameters: {},
+        inputSchema: jsonSchema({
+          type: "object",
+          properties: {},
+          required: [],
+        }),
         execute: async () => {
           return getDeliveryStatsTool.execute({ userId });
         },
@@ -403,7 +432,22 @@ router.post("/", async (req, res) => {
     availableTools.getMedicineInfo = getMedicineInfoTool;
     availableTools.getHospitalInfo = getHospitalInfoTool;
 
-    // Convert messages to AI SDK format
+    // Convert messages to AI SDK v5 UIMessage format
+    const uiMessages = messages.map((msg) => {
+      // If message already has parts, use it as is
+      if (msg.parts) {
+        return msg;
+      }
+      // Otherwise convert content to parts format
+      return {
+        ...msg,
+        id: msg.id || `msg-${Date.now()}-${Math.random()}`,
+        parts: msg.content
+          ? [{ type: "text", text: msg.content }]
+          : [{ type: "text", text: "" }],
+      };
+    });
+
     const systemMessage = {
       role: "system",
       content: `You are a helpful customer care assistant for MediFly, a drone delivery service for medical supplies. You have access to tools that can help you provide accurate information about orders, deliveries, and services.
@@ -425,6 +469,8 @@ Guidelines:
 5. Keep responses concise but helpful
 6. Always prioritize customer safety and satisfaction
 7. For order tracking, use the order details tool to provide real-time status
+8. IMPORTANT: After using any tool, ALWAYS generate a text response explaining the results in a friendly, conversational way
+9. Never finish your response immediately after calling a tool - always provide a natural language summary of what you found
 
 Current date: ${new Date().toLocaleDateString()}
 
@@ -433,52 +479,49 @@ IMPORTANT: The current user ID is ${
       }. When users ask about "my orders" or "my deliveries", use this user ID with the available tools.`,
     };
 
-    // Convert messages to model format - only convert the incoming messages
-    // The system message should be passed separately
-    const modelMessages = convertToModelMessages(messages);
+    // Convert messages to model format
+    const modelMessages = convertToModelMessages(uiMessages);
 
     // Generate AI response with tools
     const result = streamText({
-      model: openai("gpt-4o-mini"),
+      model: openai("gpt-4o"),
       system: systemMessage.content,
       messages: modelMessages,
       tools: availableTools,
       temperature: 0.7,
-      maxOutputTokens: 500,
-      stopWhen: stepCountIs(5), // Allow multi-step tool calls
-    });
+      maxTokens: 1000,
+      // In AI SDK v5, we need to set stopWhen to allow continuation after tool execution
+      stopWhen: stepCountIs(5),
+      onFinish: async ({ text, finishReason, usage, steps }) => {
+        console.log("Generated text:", text);
+        console.log("Finish reason:", finishReason);
+        console.log("Token usage:", usage);
+        console.log("Steps taken:", steps?.length || 0);
+        try {
+          console.log("Finish reason:", finishReason);
+          console.log("Token usage:", usage);
+          console.log("Steps taken:", steps?.length || 0);
 
-    // Store assistant message when complete
-    result.onFinish = async (content) => {
-      try {
-        await db.insert(chatMessages).values({
-          sessionId: session.id,
-          role: "assistant",
-          content,
-        });
-      } catch (error) {
-        console.error("Error storing assistant message:", error);
-      }
-    };
-
-    // Return the stream response with session token
-    const streamResponse = result.toUIMessageStreamResponse({
-      onError: (error) => {
-        console.error("Stream error:", error);
-        if (error.name === "NoSuchToolError") {
-          return "The model tried to call an unknown tool.";
-        } else if (error.name === "InvalidToolInputError") {
-          return "The model called a tool with invalid inputs.";
-        } else {
-          return "An unknown error occurred.";
+          // Store assistant message
+          await db.insert(chatMessages).values({
+            sessionId: session.id,
+            role: "assistant",
+            content: text,
+          });
+        } catch (error) {
+          console.error("Error storing assistant message:", error);
         }
       },
     });
 
-    // Add session token to response headers
-    streamResponse.headers.set("X-Session-Token", session.sessionToken);
+    // Set response headers for streaming
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Session-Token", session.sessionToken);
 
-    return streamResponse;
+    // Pipe UI message stream to response (includes tool calls and results)
+    return result.pipeUIMessageStreamToResponse(res);
   } catch (error) {
     console.error("Chat API error:", error);
     res.status(500).json({ error: "Internal server error" });

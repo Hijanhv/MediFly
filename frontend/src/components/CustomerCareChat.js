@@ -1,5 +1,6 @@
-import { useChat } from "@ai-sdk/react";
 import { useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import ReactMarkdown from "react-markdown";
 import { useAuth } from "../context/AuthContext";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -7,37 +8,14 @@ const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 const CustomerCareChat = () => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [sessionToken, setSessionToken] = useState(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [sessionToken, setSessionToken] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-
-  // Initialize chat with session token
-  const { messages, sendMessage, status, stop } = useChat({
-    api: `${API_URL}/api/chat`,
-    body: {
-      sessionToken,
-      userId: user?.id,
-    },
-    onFinish: (message) => {
-      // Session token is now handled in the response headers
-      // The onFinish callback provides the completed message
-      console.log("Message completed:", message);
-    },
-    onResponse: (response) => {
-      // Extract session token from response headers
-      const newSessionToken = response.headers.get("X-Session-Token");
-      if (newSessionToken && !sessionToken) {
-        setSessionToken(newSessionToken);
-      }
-    },
-    onError: (error) => {
-      console.error("Chat error:", error);
-    },
-  });
-
-  const isLoading = status === "streaming" || status === "submitted";
+  const abortControllerRef = useRef(null);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -62,16 +40,204 @@ const CustomerCareChat = () => {
     setIsMinimized(!isMinimized);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    if (inputValue.trim()) {
-      sendMessage({ text: inputValue });
+    if (inputValue.trim() && !isLoading) {
+      const userMessage = {
+        id: uuidv4(),
+        role: "user",
+        parts: [{ type: "text", text: inputValue.trim() }],
+      };
+
+      // Add user message to messages
+      setMessages((prev) => [...prev, userMessage]);
       setInputValue("");
+      setIsLoading(true);
+
+      // Create abort controller for cancellation
+      abortControllerRef.current = new AbortController();
+
+      try {
+        const response = await fetch(`${API_URL}/api/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messages: [...messages, userMessage],
+            sessionToken,
+            userId: user?.id,
+          }),
+          signal: abortControllerRef.current.signal,
+        });
+
+        // Extract session token from response headers
+        const newSessionToken = response.headers.get("X-Session-Token");
+        if (newSessionToken && newSessionToken !== sessionToken) {
+          setSessionToken(newSessionToken);
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to send message");
+        }
+
+        // Create assistant message
+        const assistantMessage = {
+          id: uuidv4(),
+          role: "assistant",
+          parts: [],
+        };
+
+        // Add initial assistant message
+        setMessages((prev) => [...prev, assistantMessage]);
+
+        // Read the streaming response
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              if (data === "[DONE]") continue;
+
+              try {
+                const parsed = JSON.parse(data);
+
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const lastMsg = updated[updated.length - 1];
+
+                  if (lastMsg && lastMsg.role === "assistant") {
+                    // Create a new parts array to avoid mutation
+                    const newParts = [...lastMsg.parts];
+
+                    if (parsed.type === "text-delta" && parsed.delta) {
+                      // Find existing text part index
+                      const textPartIndex = newParts.findIndex(
+                        (p) => p.type === "text"
+                      );
+
+                      if (textPartIndex >= 0) {
+                        // Create new text part with appended delta
+                        newParts[textPartIndex] = {
+                          ...newParts[textPartIndex],
+                          text: newParts[textPartIndex].text + parsed.delta,
+                        };
+                      } else {
+                        // Add new text part
+                        newParts.push({
+                          type: "text",
+                          text: parsed.delta,
+                        });
+                      }
+
+                      // Create new message object
+                      updated[updated.length - 1] = {
+                        ...lastMsg,
+                        parts: newParts,
+                      };
+                    } else if (parsed.type === "tool-input-start") {
+                      // Add tool call part
+                      newParts.push({
+                        type: "tool-call",
+                        toolCallId: parsed.toolCallId,
+                        toolName: parsed.toolName,
+                        input: "",
+                      });
+
+                      updated[updated.length - 1] = {
+                        ...lastMsg,
+                        parts: newParts,
+                      };
+                    } else if (parsed.type === "tool-input-delta") {
+                      // Update tool call input
+                      const toolPartIndex = newParts.findIndex(
+                        (p) =>
+                          p.type === "tool-call" &&
+                          p.toolCallId === parsed.toolCallId
+                      );
+
+                      if (toolPartIndex >= 0) {
+                        newParts[toolPartIndex] = {
+                          ...newParts[toolPartIndex],
+                          input:
+                            newParts[toolPartIndex].input +
+                            parsed.inputTextDelta,
+                        };
+
+                        updated[updated.length - 1] = {
+                          ...lastMsg,
+                          parts: newParts,
+                        };
+                      }
+                    } else if (parsed.type === "tool-input-available") {
+                      // Update tool call with complete input
+                      const toolPartIndex = newParts.findIndex(
+                        (p) =>
+                          p.type === "tool-call" &&
+                          p.toolCallId === parsed.toolCallId
+                      );
+
+                      if (toolPartIndex >= 0) {
+                        newParts[toolPartIndex] = {
+                          ...newParts[toolPartIndex],
+                          input: JSON.stringify(parsed.input, null, 2),
+                        };
+
+                        updated[updated.length - 1] = {
+                          ...lastMsg,
+                          parts: newParts,
+                        };
+                      }
+                    } else if (parsed.type === "tool-output-available") {
+                      // Add tool result part
+                      newParts.push({
+                        type: "tool-result",
+                        toolCallId: parsed.toolCallId,
+                        toolName: parsed.toolName || "unknown",
+                        result: JSON.stringify(parsed.output, null, 2),
+                      });
+
+                      updated[updated.length - 1] = {
+                        ...lastMsg,
+                        parts: newParts,
+                      };
+                    }
+                  }
+
+                  return updated;
+                });
+              } catch (e) {
+                console.error("Error parsing SSE data:", e);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Chat error:", error);
+        }
+      } finally {
+        setIsLoading(false);
+        abortControllerRef.current = null;
+      }
     }
   };
 
   const handleStop = () => {
-    stop();
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsLoading(false);
+    }
   };
 
   // Don't render if user is not logged in
@@ -118,7 +284,7 @@ const CustomerCareChat = () => {
                 <span className="text-sm">🤖</span>
               </div>
               <div>
-                <h3 className="font-semibold">MediFly Assistant</h3>
+                <h3 className="font-semibold">MediFly AI agent</h3>
                 <p className="text-xs opacity-90">
                   {isLoading ? "Typing..." : "Always here to help"}
                 </p>
@@ -195,6 +361,28 @@ const CustomerCareChat = () => {
                     <p className="text-sm mt-1">
                       How can I help you with your deliveries today?
                     </p>
+
+                    {/* Sample questions for user guidance */}
+                    <div className="mt-6 space-y-2">
+                      <p className="text-xs text-gray-400 mb-3">Try asking:</p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {[
+                          "What's my order history?",
+                          "Check my delivery status",
+                          "What medicines do you deliver?",
+                          "Find hospitals near me",
+                          "Get my delivery statistics",
+                        ].map((sample, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setInputValue(sample)}
+                            className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded-full transition-colors duration-200 text-gray-600 hover:text-gray-800"
+                          >
+                            {sample}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -217,33 +405,20 @@ const CustomerCareChat = () => {
                           {message.parts?.map((part, index) => {
                             if (part.type === "text") {
                               return (
-                                <p
-                                  key={index}
-                                  className="text-sm whitespace-pre-wrap"
-                                >
-                                  {part.text}
-                                </p>
-                              );
-                            }
-                            if (part.type === "tool-call") {
-                              return (
                                 <div
                                   key={index}
-                                  className="text-xs text-gray-500 mt-1"
+                                  className="text-sm prose prose-sm max-w-none"
                                 >
-                                  🔧 Using tool: {part.toolName}
+                                  <ReactMarkdown>{part.text}</ReactMarkdown>
                                 </div>
                               );
                             }
-                            if (part.type === "tool-result") {
-                              return (
-                                <div
-                                  key={index}
-                                  className="text-xs text-gray-500 mt-1"
-                                >
-                                  ✅ Tool result: {part.toolName}
-                                </div>
-                              );
+                            // Hide tool call indicators from the UI
+                            if (
+                              part.type === "tool-call" ||
+                              part.type === "tool-result"
+                            ) {
+                              return null;
                             }
                             return null;
                           })}

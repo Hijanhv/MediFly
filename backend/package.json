@@ -8,7 +8,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^1.0.4",
+    "@ai-sdk/openai": "^2.0.0",
     "ai": "^5.0.24",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
