@@ -23,7 +23,9 @@ router.post("/cities", async (req, res) => {
     const { name, state, country, latitude, longitude } = req.body;
 
     if (!name || !latitude || !longitude) {
-      return res.status(400).json({ message: "City name, latitude, and longitude are required" });
+      return res
+        .status(400)
+        .json({ message: "City name, latitude, and longitude are required" });
     }
 
     const result = await pool.query(
@@ -96,13 +98,20 @@ router.get("/hospitals", async (req, res) => {
 
 router.post("/hospitals", async (req, res) => {
   try {
-    const { name, city_id, address, contact_number, latitude, longitude } = req.body;
+    const { name, city_id, address, contact_number, pincode } = req.body;
 
     // Validate required fields
-    if (!name || !city_id || !latitude || !longitude) {
+    if (!name || !city_id || !pincode) {
       return res
         .status(400)
-        .json({ message: "Hospital name, city, latitude, and longitude are required" });
+        .json({ message: "Hospital name, city, and pincode are required" });
+    }
+
+    // Validate pincode format (6 digits for Indian pincodes)
+    if (pincode && !/^\d{6}$/.test(pincode)) {
+      return res.status(400).json({
+        message: "Pincode must be a 6-digit number (e.g., 411001)",
+      });
     }
 
     // Validate contact number format if provided
@@ -114,8 +123,8 @@ router.post("/hospitals", async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO hospitals (name, city_id, address, contact_number, latitude, longitude) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [name, city_id, address, contact_number, latitude, longitude]
+      "INSERT INTO hospitals (name, city_id, address, contact_number, pincode) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [name, city_id, address, contact_number, pincode]
     );
 
     res.status(201).json(result.rows[0]);
@@ -139,11 +148,18 @@ router.post("/hospitals", async (req, res) => {
 router.put("/hospitals/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, city_id, address, contact_number, latitude, longitude } = req.body;
+    const { name, city_id, address, contact_number, pincode } = req.body;
+
+    // Validate pincode format if provided
+    if (pincode && !/^\d{6}$/.test(pincode)) {
+      return res.status(400).json({
+        message: "Pincode must be a 6-digit number (e.g., 411001)",
+      });
+    }
 
     const result = await pool.query(
-      "UPDATE hospitals SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), address = COALESCE($3, address), contact_number = COALESCE($4, contact_number), latitude = COALESCE($5, latitude), longitude = COALESCE($6, longitude) WHERE id = $7 RETURNING *",
-      [name, city_id, address, contact_number, latitude, longitude, id]
+      "UPDATE hospitals SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), address = COALESCE($3, address), contact_number = COALESCE($4, contact_number), pincode = COALESCE($5, pincode) WHERE id = $6 RETURNING *",
+      [name, city_id, address, contact_number, pincode, id]
     );
 
     if (result.rows.length === 0) {
@@ -196,7 +212,9 @@ router.post("/villages", async (req, res) => {
     if (!name || !city_id || !latitude || !longitude) {
       return res
         .status(400)
-        .json({ message: "Village name, city, latitude, and longitude are required" });
+        .json({
+          message: "Village name, city, latitude, and longitude are required",
+        });
     }
 
     // Validate population if provided

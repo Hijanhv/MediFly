@@ -88,27 +88,34 @@ const MapComponent = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
 
-        {/* Hospital markers */}
-        {hospitals.map((hospital) => (
-          <Marker
-            key={hospital.id}
-            position={getMarkerPosition(hospital)}
-            icon={hospitalIcon}
-          >
-            <Popup>
-              <div className="text-center">
-                <h3 className="font-bold text-blue-600">{hospital.name}</h3>
-                <p className="text-sm text-gray-600">
-                  {hospital.city_name || "Unknown City"}
-                </p>
-                {hospital.address && (
-                  <p className="text-xs text-gray-500">{hospital.address}</p>
-                )}
-                <p className="text-xs text-gray-500">Medical Facility</p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {/* Hospital markers - Note: Hospitals now use pincode, coordinates not available */}
+        {hospitals
+          .filter((hospital) => hospital.latitude && hospital.longitude)
+          .map((hospital) => (
+            <Marker
+              key={hospital.id}
+              position={getMarkerPosition(hospital)}
+              icon={hospitalIcon}
+            >
+              <Popup>
+                <div className="text-center">
+                  <h3 className="font-bold text-blue-600">{hospital.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {hospital.city_name || "Unknown City"}
+                  </p>
+                  {hospital.address && (
+                    <p className="text-xs text-gray-500">{hospital.address}</p>
+                  )}
+                  {hospital.pincode && (
+                    <p className="text-xs text-gray-500">
+                      Pincode: {hospital.pincode}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">Medical Facility</p>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
 
         {/* Village markers */}
         {villages.map((village) => (

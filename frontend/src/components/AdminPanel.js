@@ -110,6 +110,11 @@ const AdminPanel = () => {
       if (!formData.city_id) {
         errors.city_id = "Please select a city";
       }
+      if (!formData.pincode?.trim()) {
+        errors.pincode = "Pincode is required";
+      } else if (!/^\d{6}$/.test(formData.pincode)) {
+        errors.pincode = "Pincode must be exactly 6 digits";
+      }
       if (
         formData.contact_number &&
         !/^[+]?[\d\s-()]+$/.test(formData.contact_number)
@@ -243,6 +248,27 @@ const AdminPanel = () => {
               {formErrors.contact_number && (
                 <p className="text-red-500 text-xs mb-3">
                   {formErrors.contact_number}
+                </p>
+              )}
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="e.g., 411001 (6-digit pincode)"
+                value={formData.pincode || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, pincode: e.target.value })
+                }
+                className={`w-full px-4 py-2 border rounded-lg mb-1 ${
+                  formErrors.pincode ? "border-red-500" : "border-gray-300"
+                }`}
+                required
+                maxLength="6"
+                pattern="\d{6}"
+              />
+              {formErrors.pincode && (
+                <p className="text-red-500 text-xs mb-3">
+                  {formErrors.pincode}
                 </p>
               )}
             </div>

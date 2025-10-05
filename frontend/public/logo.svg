@@ -1,0 +1,81 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle with Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="droneGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4facfe;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00f2fe;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="crossGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f093fb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5576c;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="url(#bgGradient)" />
+  
+  <!-- White inner circle for contrast -->
+  <circle cx="100" cy="100" r="80" fill="white" opacity="0.95" />
+  
+  <!-- Medical Cross -->
+  <g transform="translate(100, 100)">
+    <!-- Vertical bar of cross -->
+    <rect x="-8" y="-35" width="16" height="70" rx="3" fill="url(#crossGradient)" />
+    <!-- Horizontal bar of cross -->
+    <rect x="-35" y="-8" width="70" height="16" rx="3" fill="url(#crossGradient)" />
+    
+    <!-- Plus sign highlight -->
+    <rect x="-6" y="-33" width="12" height="66" rx="2" fill="white" opacity="0.3" />
+    <rect x="-33" y="-6" width="66" height="12" rx="2" fill="white" opacity="0.3" />
+  </g>
+  
+  <!-- Drone body (simplified quadcopter) -->
+  <g transform="translate(100, 100)">
+    <!-- Main drone body -->
+    <ellipse cx="0" cy="0" rx="25" ry="15" fill="url(#droneGradient)" opacity="0.9" />
+    
+    <!-- Drone arms -->
+    <line x1="-30" y1="-5" x2="-50" y2="-25" stroke="url(#droneGradient)" stroke-width="4" stroke-linecap="round" />
+    <line x1="30" y1="-5" x2="50" y2="-25" stroke="url(#droneGradient)" stroke-width="4" stroke-linecap="round" />
+    <line x1="-30" y1="5" x2="-50" y2="25" stroke="url(#droneGradient)" stroke-width="4" stroke-linecap="round" />
+    <line x1="30" y1="5" x2="50" y2="25" stroke="url(#droneGradient)" stroke-width="4" stroke-linecap="round" />
+    
+    <!-- Propellers -->
+    <g opacity="0.6">
+      <!-- Top left propeller -->
+      <ellipse cx="-50" cy="-25" rx="8" ry="3" fill="#00f2fe" transform="rotate(-45 -50 -25)" />
+      <ellipse cx="-50" cy="-25" rx="3" ry="8" fill="#00f2fe" transform="rotate(-45 -50 -25)" />
+      
+      <!-- Top right propeller -->
+      <ellipse cx="50" cy="-25" rx="8" ry="3" fill="#00f2fe" transform="rotate(45 50 -25)" />
+      <ellipse cx="50" cy="-25" rx="3" ry="8" fill="#00f2fe" transform="rotate(45 50 -25)" />
+      
+      <!-- Bottom left propeller -->
+      <ellipse cx="-50" cy="25" rx="8" ry="3" fill="#00f2fe" transform="rotate(45 -50 25)" />
+      <ellipse cx="-50" cy="25" rx="3" ry="8" fill="#00f2fe" transform="rotate(45 -50 25)" />
+      
+      <!-- Bottom right propeller -->
+      <ellipse cx="50" cy="25" rx="8" ry="3" fill="#00f2fe" transform="rotate(-45 50 25)" />
+      <ellipse cx="50" cy="25" rx="3" ry="8" fill="#00f2fe" transform="rotate(-45 50 25)" />
+    </g>
+    
+    <!-- Propeller motors -->
+    <circle cx="-50" cy="-25" r="5" fill="#667eea" />
+    <circle cx="50" cy="-25" r="5" fill="#667eea" />
+    <circle cx="-50" cy="25" r="5" fill="#667eea" />
+    <circle cx="50" cy="25" r="5" fill="#667eea" />
+    
+    <!-- Medical package hanging -->
+    <line x1="0" y1="10" x2="0" y2="35" stroke="#764ba2" stroke-width="2" stroke-dasharray="2,2" />
+    <rect x="-12" y="35" width="24" height="20" rx="3" fill="white" stroke="#f5576c" stroke-width="2" />
+    <line x1="-12" y1="45" x2="12" y2="45" stroke="#f5576c" stroke-width="2" />
+    <line x1="0" y1="35" x2="0" y2="55" stroke="#f5576c" stroke-width="2" />
+  </g>
+  
+  <!-- Outer ring decoration -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="white" stroke-width="2" opacity="0.3" />
+</svg>
