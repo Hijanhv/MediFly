@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS hospitals (
     city_id INTEGER REFERENCES cities(id) ON DELETE CASCADE,
     address TEXT,
     contact_number VARCHAR(50),
+    pincode VARCHAR(10),
     latitude DECIMAL(10, 8) NOT NULL,
     longitude DECIMAL(11, 8) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
