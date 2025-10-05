@@ -1,6 +1,9 @@
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { Plane } from "lucide-react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -48,9 +51,11 @@ const MapComponent = ({
   });
 
   const droneIcon = new L.DivIcon({
-    html: `<div class="flex items-center justify-center w-8 h-8 bg-red-500 rounded-full shadow-lg drone-pulse">
-             <span class="text-white text-sm">🚁</span>
-           </div>`,
+    html: renderToStaticMarkup(
+      <div className="flex items-center justify-center w-8 h-8 bg-red-500 rounded-full shadow-lg drone-pulse">
+        <Plane className="text-white" size={16} />
+      </div>
+    ),
     className: "custom-drone-marker",
     iconSize: [32, 32],
     iconAnchor: [16, 16],
