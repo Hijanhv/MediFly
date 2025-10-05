@@ -243,8 +243,8 @@ router.patch(
       // Update delivery
       const result = await pool.query(
         `UPDATE deliveries 
-       SET drone_id = $1, operator_id = $2, status = 'preparing' 
-       WHERE id = $3 AND status = 'pending' 
+       SET drone_id = ?, operator_id = ?, status = 'preparing' 
+       WHERE id = ? AND status = 'pending' 
        RETURNING *`,
         [drone.id, req.user.userId, id]
       );
@@ -257,7 +257,7 @@ router.patch(
 
       // Update drone status
       await pool.query(
-        "UPDATE drones SET status = 'delivering' WHERE id = $1",
+        "UPDATE drones SET status = 'delivering' WHERE id = ?",
         [drone.id]
       );
 

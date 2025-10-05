@@ -138,8 +138,9 @@ const UserDashboard = () => {
   };
 
   const cancelDelivery = async (deliveryId) => {
-    if (!window.confirm("Are you sure you want to cancel this delivery?"))
+    if (!window.confirm("Are you sure you want to cancel this delivery?")) {
       return;
+    }
 
     try {
       const token = localStorage.getItem("token");
