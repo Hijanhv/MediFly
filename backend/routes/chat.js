@@ -434,14 +434,20 @@ IMPORTANT: The current user ID is ${
     };
 
     // Convert messages to model format
-    const modelMessages = convertToModelMessages([
+    const allMessages = [
       systemMessage,
       ...chatHistory.map((msg) => ({
         role: msg.role,
         content: msg.content,
       })),
       ...messages,
-    ]);
+    ];
+
+    // Ensure all messages have the correct format
+    const validMessages = allMessages.filter(
+      (msg) => msg && msg.role && msg.content
+    );
+    const modelMessages = convertToModelMessages(validMessages);
 
     // Generate AI response with tools
     const result = streamText({
