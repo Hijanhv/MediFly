@@ -1,0 +1,125 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <!-- Sky background with hand-drawn clouds -->
+  <defs>
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#E0F6FF;stop-opacity:0.2" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1920" height="1080" fill="url(#skyGradient)"/>
+  
+  <!-- Hand-drawn clouds -->
+  <g opacity="0.4" stroke="#6B9BD1" stroke-width="2" fill="none">
+    <!-- Cloud 1 -->
+    <path d="M 100 150 Q 90 130, 110 125 Q 120 115, 135 120 Q 150 110, 165 125 Q 180 115, 190 130 Q 200 125, 195 145 Q 180 155, 165 150 Q 150 160, 135 155 Q 120 160, 110 155 Q 95 160, 100 150 Z" 
+          stroke-dasharray="3,2"/>
+    
+    <!-- Cloud 2 -->
+    <path d="M 800 100 Q 790 85, 805 80 Q 815 70, 830 75 Q 845 65, 860 80 Q 870 75, 875 90 Q 885 85, 880 105 Q 865 115, 850 110 Q 835 120, 820 115 Q 805 120, 800 100 Z"
+          stroke-dasharray="3,2"/>
+    
+    <!-- Cloud 3 -->
+    <path d="M 1400 180 Q 1385 160, 1405 155 Q 1420 145, 1435 150 Q 1450 140, 1465 155 Q 1480 145, 1490 165 Q 1500 160, 1495 180 Q 1480 190, 1465 185 Q 1450 195, 1435 190 Q 1420 195, 1405 190 Q 1390 200, 1400 180 Z"
+          stroke-dasharray="3,2"/>
+    
+    <!-- Cloud 4 -->
+    <path d="M 300 500 Q 285 480, 305 475 Q 320 465, 335 470 Q 350 460, 365 475 Q 375 470, 380 485 Q 390 480, 385 500 Q 370 510, 355 505 Q 340 515, 325 510 Q 310 515, 300 500 Z"
+          stroke-dasharray="3,2"/>
+  </g>
+  
+  <!-- Hand-drawn drones -->
+  <g opacity="0.3">
+    <!-- Drone 1 - sketchy style -->
+    <g transform="translate(500, 250)">
+      <ellipse cx="0" cy="0" rx="20" ry="12" fill="#4A5568" opacity="0.6" stroke="#2D3748" stroke-width="1.5"/>
+      <!-- Propeller arms -->
+      <line x1="-25" y1="-8" x2="-40" y2="-20" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="25" y1="-8" x2="40" y2="-20" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="-25" y1="8" x2="-40" y2="20" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="25" y1="8" x2="40" y2="20" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Propellers - hand drawn circles -->
+      <circle cx="-40" cy="-20" r="6" fill="none" stroke="#4299E1" stroke-width="2" stroke-dasharray="1,1"/>
+      <circle cx="40" cy="-20" r="6" fill="none" stroke="#4299E1" stroke-width="2" stroke-dasharray="1,1"/>
+      <circle cx="-40" cy="20" r="6" fill="none" stroke="#4299E1" stroke-width="2" stroke-dasharray="1,1"/>
+      <circle cx="40" cy="20" r="6" fill="none" stroke="#4299E1" stroke-width="2" stroke-dasharray="1,1"/>
+      <!-- Medical box hanging -->
+      <line x1="0" y1="10" x2="0" y2="25" stroke="#E53E3E" stroke-width="1.5" stroke-dasharray="2,1"/>
+      <rect x="-8" y="25" width="16" height="12" fill="#FFF5F5" stroke="#E53E3E" stroke-width="1.5" rx="2"/>
+      <path d="M -4 31 L 4 31 M 0 27 L 0 35" stroke="#E53E3E" stroke-width="2"/>
+    </g>
+    
+    <!-- Drone 2 -->
+    <g transform="translate(1200, 400)">
+      <ellipse cx="0" cy="0" rx="18" ry="11" fill="#4A5568" opacity="0.6" stroke="#2D3748" stroke-width="1.5"/>
+      <line x1="-23" y1="-7" x2="-38" y2="-18" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="23" y1="-7" x2="38" y2="-18" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="-23" y1="7" x2="-38" y2="18" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="23" y1="7" x2="38" y2="18" stroke="#2D3748" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="-38" cy="-18" r="5" fill="none" stroke="#4299E1" stroke-width="2" stroke-dasharray="1,1"/>
+      <circle cx="38" cy="-18" r="5" fill="none" stroke="#4299E1" stroke-width="2" stroke-dasharray="1,1"/>
+      <circle cx="-38" cy="18" r="5" fill="none" stroke="#4299E1" stroke-width="2" stroke-dasharray="1,1"/>
+      <circle cx="38" cy="18" r="5" fill="none" stroke="#4299E1" stroke-width="2" stroke-dasharray="1,1"/>
+    </g>
+    
+    <!-- Drone 3 - smaller -->
+    <g transform="translate(1600, 200)">
+      <ellipse cx="0" cy="0" rx="15" ry="9" fill="#4A5568" opacity="0.6" stroke="#2D3748" stroke-width="1.5"/>
+      <line x1="-20" y1="-6" x2="-32" y2="-15" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+      <line x1="20" y1="-6" x2="32" y2="-15" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+      <line x1="-20" y1="6" x2="-32" y2="15" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+      <line x1="20" y1="6" x2="32" y2="15" stroke="#2D3748" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="-32" cy="-15" r="4" fill="none" stroke="#4299E1" stroke-width="1.5" stroke-dasharray="1,1"/>
+      <circle cx="32" cy="-15" r="4" fill="none" stroke="#4299E1" stroke-width="1.5" stroke-dasharray="1,1"/>
+      <circle cx="-32" cy="15" r="4" fill="none" stroke="#4299E1" stroke-width="1.5" stroke-dasharray="1,1"/>
+      <circle cx="32" cy="15" r="4" fill="none" stroke="#4299E1" stroke-width="1.5" stroke-dasharray="1,1"/>
+    </g>
+  </g>
+  
+  <!-- Hand-drawn medical symbols scattered -->
+  <g opacity="0.15" stroke="#E53E3E" stroke-width="2" fill="none">
+    <path d="M 200 800 L 200 840 M 180 820 L 220 820" stroke-linecap="round"/>
+    <circle cx="200" cy="820" r="25" stroke-dasharray="2,2"/>
+    
+    <path d="M 1700 850 L 1700 890 M 1680 870 L 1720 870" stroke-linecap="round"/>
+    <circle cx="1700" cy="870" r="25" stroke-dasharray="2,2"/>
+    
+    <path d="M 900 900 L 900 930 M 885 915 L 915 915" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Sketchy pills and medicine bottles -->
+  <g opacity="0.12" stroke="#805AD5" stroke-width="2" fill="none">
+    <!-- Pill 1 -->
+    <ellipse cx="400" cy="950" rx="20" ry="10" transform="rotate(30 400 950)" stroke-dasharray="3,2"/>
+    <line x1="385" y1="945" x2="415" y2="955" stroke-width="2"/>
+    
+    <!-- Pill 2 -->
+    <ellipse cx="1500" cy="920" rx="18" ry="9" transform="rotate(-20 1500 920)" stroke-dasharray="3,2"/>
+    <line x1="1487" y1="914" x2="1513" y2="926" stroke-width="2"/>
+    
+    <!-- Medicine bottle -->
+    <rect x="1300" y="1000" width="30" height="50" rx="3" stroke-dasharray="2,2"/>
+    <rect x="1308" y="995" width="14" height="8" rx="2"/>
+    <path d="M 1308 1020 L 1322 1020 M 1308 1030 L 1322 1030"/>
+  </g>
+  
+  <!-- Hand-drawn hearts -->
+  <g opacity="0.2" fill="#F56565" stroke="#E53E3E" stroke-width="1.5">
+    <path d="M 150 700 Q 145 690, 150 685 Q 155 680, 160 685 Q 165 680, 170 685 Q 175 690, 170 700 L 160 710 L 150 700 Z"/>
+    <path d="M 1800 700 Q 1795 690, 1800 685 Q 1805 680, 1810 685 Q 1815 680, 1820 685 Q 1825 690, 1820 700 L 1810 710 L 1800 700 Z"/>
+  </g>
+  
+  <!-- Dotted flight paths -->
+  <g opacity="0.15" stroke="#4299E1" stroke-width="2" fill="none" stroke-dasharray="5,5">
+    <path d="M 100 200 Q 300 250, 500 200 Q 700 150, 900 180"/>
+    <path d="M 1000 300 Q 1200 350, 1400 320 Q 1600 280, 1800 300"/>
+    <path d="M 200 600 Q 400 550, 600 580 Q 800 620, 1000 600"/>
+  </g>
+  
+  <!-- Hand-drawn stars -->
+  <g opacity="0.3" fill="#FBD38D" stroke="#F6AD55" stroke-width="1">
+    <path d="M 250 300 L 253 307 L 261 307 L 255 312 L 258 320 L 250 315 L 242 320 L 245 312 L 239 307 L 247 307 Z"/>
+    <path d="M 1650 450 L 653 457 L 661 457 L 655 462 L 658 470 L 650 465 L 642 470 L 645 462 L 639 457 L 647 457 Z"/>
+    <path d="M 700 150 L 703 157 L 711 157 L 705 162 L 708 170 L 700 165 L 692 170 L 695 162 L 689 157 L 697 157 Z"/>
+  </g>
+</svg>

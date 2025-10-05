@@ -51,49 +51,104 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{
+      background: 'linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 50%, #fce7f3 100%)'
+    }}>
+      {/* Hand-drawn doodle elements - softer, more organic */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+        <div className="absolute rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
+          style={{
+            top: '80px',
+            left: '40px',
+            width: '280px',
+            height: '280px',
+            background: '#c4b5fd',
+            opacity: 0.3
+          }}></div>
         <div
-          className="absolute top-40 right-10 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"
-          style={{ animationDelay: "2s" }}
+          className="absolute rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
+          style={{
+            top: '160px',
+            right: '40px',
+            width: '280px',
+            height: '280px',
+            background: '#a5b4fc',
+            opacity: 0.3,
+            animationDelay: '2s'
+          }}
         ></div>
         <div
-          className="absolute -bottom-32 left-1/3 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"
-          style={{ animationDelay: "4s" }}
+          className="absolute rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
+          style={{
+            bottom: '-128px',
+            left: '33%',
+            width: '280px',
+            height: '280px',
+            background: '#fbcfe8',
+            opacity: 0.3,
+            animationDelay: '4s'
+          }}
         ></div>
       </div>
 
       <div className="max-w-md w-full relative z-10 slide-in-up">
-        {/* Card */}
-        <div className="bg-white bg-opacity-80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white border-opacity-50">
+        {/* Card with organic styling */}
+        <div className="backdrop-blur-xl p-8" style={{
+          background: 'rgba(255, 255, 255, 0.85)',
+          borderRadius: '32px',
+          border: '3px solid rgba(255, 255, 255, 0.6)',
+          boxShadow: '0 12px 24px rgba(0, 0, 0, 0.12)'
+        }}>
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center mb-4">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl blur-2xl opacity-50 animate-pulse"></div>
-                <div className="relative p-4 bg-white rounded-3xl shadow-xl">
+                <div className="absolute inset-0 rounded-3xl blur-2xl opacity-40 animate-pulse" style={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'
+                }}></div>
+                <div className="relative p-4 bg-white shadow-xl" style={{
+                  borderRadius: '28px',
+                  border: '3px solid rgba(99, 102, 241, 0.3)',
+                  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)'
+                }}>
                   <img
                     src="/logo.svg"
                     alt="MediFly Logo"
-                    className="w-20 h-20 object-contain"
+                    className="object-contain"
+                    style={{ width: '80px', height: '80px' }}
                   />
                 </div>
               </div>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              Medi<span className="text-pink-500">Fly</span>
+            <h1 className="mb-2" style={{
+              fontSize: '42px',
+              fontFamily: '"Quicksand", sans-serif',
+              fontWeight: '700',
+              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              textShadow: '0 2px 4px rgba(0, 0, 0, 0.05)'
+            }}>
+              Medi<span style={{ color: '#ec4899' }}>Fly</span>
             </h1>
-            <p className="text-gray-600 font-medium">
+            <p className="text-gray-600" style={{
+              fontFamily: '"Comfortaa", sans-serif',
+              fontWeight: '600',
+              fontSize: '16px'
+            }}>
               {isLogin ? "👋 Welcome back!" : "✨ Create your account"}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {!isLogin && (
               <div className="fade-in">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-gray-700 mb-2" style={{
+                  fontSize: '14px',
+                  fontFamily: '"Quicksand", sans-serif',
+                  fontWeight: '700'
+                }}>
                   📝 Full Name
                 </label>
                 <input
@@ -109,7 +164,11 @@ const Login = () => {
             )}
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-gray-700 mb-2" style={{
+                fontSize: '14px',
+                fontFamily: '"Quicksand", sans-serif',
+                fontWeight: '700'
+              }}>
                 📧 Email Address
               </label>
               <input
@@ -124,7 +183,11 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-gray-700 mb-2" style={{
+                fontSize: '14px',
+                fontFamily: '"Quicksand", sans-serif',
+                fontWeight: '700'
+              }}>
                 🔒 Password
               </label>
               <input
@@ -140,7 +203,11 @@ const Login = () => {
 
             {!isLogin && (
               <div className="fade-in">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-gray-700 mb-2" style={{
+                  fontSize: '14px',
+                  fontFamily: '"Quicksand", sans-serif',
+                  fontWeight: '700'
+                }}>
                   👤 Select Role
                 </label>
                 <select
@@ -157,7 +224,15 @@ const Login = () => {
             )}
 
             {error && (
-              <div className="p-4 bg-red-50 border-2 border-red-200 text-red-700 rounded-xl text-sm font-medium flex items-start gap-2 fade-in">
+              <div className="p-4 text-sm flex items-start fade-in" style={{
+                background: '#fef2f2',
+                border: '3px solid #fecaca',
+                color: '#991b1b',
+                borderRadius: '20px',
+                fontFamily: '"Comfortaa", sans-serif',
+                fontWeight: '600',
+                gap: '8px'
+              }}>
                 <svg
                   className="w-5 h-5 flex-shrink-0 mt-0.5"
                   fill="currentColor"
@@ -213,7 +288,18 @@ const Login = () => {
                 setIsLogin(!isLogin);
                 setError("");
               }}
-              className="text-indigo-600 hover:text-indigo-800 font-semibold text-sm transition-colors duration-200 hover:underline"
+              className="transition-colors duration-200 hover:underline"
+              style={{
+                color: '#6366f1',
+                fontFamily: '"Quicksand", sans-serif',
+                fontWeight: '700',
+                fontSize: '14px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onMouseOver={(e) => e.target.style.color = '#4f46e5'}
+              onMouseOut={(e) => e.target.style.color = '#6366f1'}
             >
               {isLogin
                 ? "✨ Don't have an account? Sign up"
@@ -223,22 +309,41 @@ const Login = () => {
 
           {/* Demo credentials hint */}
           {isLogin && (
-            <div className="mt-6 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-              <p className="text-xs text-indigo-800 font-semibold mb-2">
+            <div className="mt-6 p-4" style={{
+              background: '#eef2ff',
+              borderRadius: '20px',
+              border: '3px solid #c7d2fe'
+            }}>
+              <p className="text-indigo-800 mb-2" style={{
+                fontSize: '13px',
+                fontFamily: '"Quicksand", sans-serif',
+                fontWeight: '700'
+              }}>
                 🔑 Demo Credentials:
               </p>
-              <div className="text-xs text-indigo-600 space-y-1">
+              <div className="text-indigo-600" style={{
+                fontSize: '13px',
+                fontFamily: '"Comfortaa", sans-serif',
+                fontWeight: '600',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px'
+              }}>
                 <p>👤 User: user@medifly.com</p>
                 <p>🎮 Operator: operator@medifly.com</p>
                 <p>👑 Admin: admin@medifly.com</p>
-                <p className="text-indigo-500 mt-2">Password: 123456</p>
+                <p className="text-indigo-500" style={{ marginTop: '8px' }}>Password: 123456</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer text */}
-        <p className="text-center mt-6 text-gray-600 text-sm">
+        <p className="text-center mt-6 text-gray-600" style={{
+          fontSize: '14px',
+          fontFamily: '"Comfortaa", sans-serif',
+          fontWeight: '600'
+        }}>
           🚁 Medical supplies delivered by drone
         </p>
       </div>
