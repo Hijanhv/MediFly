@@ -1,4 +1,3 @@
-import React from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,7 +7,7 @@ import {
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./components/Login";
 import Header from "./components/Header";
-import UserDashboard from "./components/UserDashboard_new";
+import UserDashboard from "./components/UserDashboard";
 import OperatorPanel from "./components/OperatorPanel";
 import AdminPanel from "./components/AdminPanel";
 import "./index.css";

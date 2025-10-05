@@ -1,5 +1,7 @@
 const express = require("express");
-const pool = require("../config/database");
+const { eq, asc, sql } = require("drizzle-orm");
+const db = require("../db");
+const { cities, hospitals, villages, medicineTypes, drones } = require("../db/schema");
 const { authenticateToken, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
@@ -10,8 +12,8 @@ router.use(authenticateToken, authorizeRoles("admin"));
 // ===== CITIES =====
 router.get("/cities", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM cities ORDER BY name");
-    res.json(result.rows);
+    const result = await db.select().from(cities).orderBy(asc(cities.name));
+    res.json(result);
   } catch (error) {
     console.error("Error fetching cities:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -28,12 +30,18 @@ router.post("/cities", async (req, res) => {
         .json({ message: "City name, latitude, and longitude are required" });
     }
 
-    const result = await pool.query(
-      "INSERT INTO cities (name, state, country, latitude, longitude) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [name, state, country || "India", latitude, longitude]
-    );
+    const result = await db
+      .insert(cities)
+      .values({
+        name,
+        state,
+        country: country || "India",
+        latitude,
+        longitude,
+      })
+      .returning();
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result[0]);
   } catch (error) {
     if (error.code === "23505") {
       return res.status(409).json({ message: "City already exists" });
@@ -48,16 +56,24 @@ router.put("/cities/:id", async (req, res) => {
     const { id } = req.params;
     const { name, state, country, latitude, longitude } = req.body;
 
-    const result = await pool.query(
-      "UPDATE cities SET name = COALESCE($1, name), state = COALESCE($2, state), country = COALESCE($3, country), latitude = COALESCE($4, latitude), longitude = COALESCE($5, longitude) WHERE id = $6 RETURNING *",
-      [name, state, country, latitude, longitude, id]
-    );
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (state !== undefined) updateData.state = state;
+    if (country !== undefined) updateData.country = country;
+    if (latitude !== undefined) updateData.latitude = latitude;
+    if (longitude !== undefined) updateData.longitude = longitude;
 
-    if (result.rows.length === 0) {
+    const result = await db
+      .update(cities)
+      .set(updateData)
+      .where(eq(cities.id, id))
+      .returning();
+
+    if (result.length === 0) {
       return res.status(404).json({ message: "City not found" });
     }
 
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error) {
     console.error("Error updating city:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -67,12 +83,12 @@ router.put("/cities/:id", async (req, res) => {
 router.delete("/cities/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      "DELETE FROM cities WHERE id = $1 RETURNING *",
-      [id]
-    );
+    const result = await db
+      .delete(cities)
+      .where(eq(cities.id, id))
+      .returning();
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ message: "City not found" });
     }
 
@@ -86,10 +102,22 @@ router.delete("/cities/:id", async (req, res) => {
 // ===== HOSPITALS =====
 router.get("/hospitals", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT h.*, c.name as city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.id ORDER BY h.name"
-    );
-    res.json(result.rows);
+    const result = await db
+      .select({
+        id: hospitals.id,
+        name: hospitals.name,
+        cityId: hospitals.cityId,
+        address: hospitals.address,
+        contactNumber: hospitals.contactNumber,
+        pincode: hospitals.pincode,
+        latitude: hospitals.latitude,
+        longitude: hospitals.longitude,
+        city_name: cities.name,
+      })
+      .from(hospitals)
+      .leftJoin(cities, eq(hospitals.cityId, cities.id))
+      .orderBy(asc(hospitals.name));
+    res.json(result);
   } catch (error) {
     console.error("Error fetching hospitals:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -122,12 +150,18 @@ router.post("/hospitals", async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      "INSERT INTO hospitals (name, city_id, address, contact_number, pincode) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [name, city_id, address, contact_number, pincode]
-    );
+    const result = await db
+      .insert(hospitals)
+      .values({
+        name,
+        cityId: city_id,
+        address,
+        contactNumber: contact_number,
+        pincode,
+      })
+      .returning();
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result[0]);
   } catch (error) {
     console.error("Error creating hospital:", error);
 
@@ -157,16 +191,24 @@ router.put("/hospitals/:id", async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      "UPDATE hospitals SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), address = COALESCE($3, address), contact_number = COALESCE($4, contact_number), pincode = COALESCE($5, pincode) WHERE id = $6 RETURNING *",
-      [name, city_id, address, contact_number, pincode, id]
-    );
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (city_id !== undefined) updateData.cityId = city_id;
+    if (address !== undefined) updateData.address = address;
+    if (contact_number !== undefined) updateData.contactNumber = contact_number;
+    if (pincode !== undefined) updateData.pincode = pincode;
 
-    if (result.rows.length === 0) {
+    const result = await db
+      .update(hospitals)
+      .set(updateData)
+      .where(eq(hospitals.id, id))
+      .returning();
+
+    if (result.length === 0) {
       return res.status(404).json({ message: "Hospital not found" });
     }
 
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error) {
     console.error("Error updating hospital:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -176,12 +218,12 @@ router.put("/hospitals/:id", async (req, res) => {
 router.delete("/hospitals/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      "DELETE FROM hospitals WHERE id = $1 RETURNING *",
-      [id]
-    );
+    const result = await db
+      .delete(hospitals)
+      .where(eq(hospitals.id, id))
+      .returning();
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ message: "Hospital not found" });
     }
 
@@ -195,10 +237,20 @@ router.delete("/hospitals/:id", async (req, res) => {
 // ===== VILLAGES =====
 router.get("/villages", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT v.*, c.name as city_name FROM villages v LEFT JOIN cities c ON v.city_id = c.id ORDER BY v.name"
-    );
-    res.json(result.rows);
+    const result = await db
+      .select({
+        id: villages.id,
+        name: villages.name,
+        cityId: villages.cityId,
+        population: villages.population,
+        latitude: villages.latitude,
+        longitude: villages.longitude,
+        city_name: cities.name,
+      })
+      .from(villages)
+      .leftJoin(cities, eq(villages.cityId, cities.id))
+      .orderBy(asc(villages.name));
+    res.json(result);
   } catch (error) {
     console.error("Error fetching villages:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -227,12 +279,18 @@ router.post("/villages", async (req, res) => {
       }
     }
 
-    const result = await pool.query(
-      "INSERT INTO villages (name, city_id, population, latitude, longitude) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [name, city_id, population, latitude, longitude]
-    );
+    const result = await db
+      .insert(villages)
+      .values({
+        name,
+        cityId: city_id,
+        population,
+        latitude,
+        longitude,
+      })
+      .returning();
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result[0]);
   } catch (error) {
     console.error("Error creating village:", error);
 
@@ -249,16 +307,24 @@ router.put("/villages/:id", async (req, res) => {
     const { id } = req.params;
     const { name, city_id, population, latitude, longitude } = req.body;
 
-    const result = await pool.query(
-      "UPDATE villages SET name = COALESCE($1, name), city_id = COALESCE($2, city_id), population = COALESCE($3, population), latitude = COALESCE($4, latitude), longitude = COALESCE($5, longitude) WHERE id = $6 RETURNING *",
-      [name, city_id, population, latitude, longitude, id]
-    );
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (city_id !== undefined) updateData.cityId = city_id;
+    if (population !== undefined) updateData.population = population;
+    if (latitude !== undefined) updateData.latitude = latitude;
+    if (longitude !== undefined) updateData.longitude = longitude;
 
-    if (result.rows.length === 0) {
+    const result = await db
+      .update(villages)
+      .set(updateData)
+      .where(eq(villages.id, id))
+      .returning();
+
+    if (result.length === 0) {
       return res.status(404).json({ message: "Village not found" });
     }
 
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error) {
     console.error("Error updating village:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -268,12 +334,12 @@ router.put("/villages/:id", async (req, res) => {
 router.delete("/villages/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      "DELETE FROM villages WHERE id = $1 RETURNING *",
-      [id]
-    );
+    const result = await db
+      .delete(villages)
+      .where(eq(villages.id, id))
+      .returning();
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ message: "Village not found" });
     }
 
@@ -287,10 +353,8 @@ router.delete("/villages/:id", async (req, res) => {
 // ===== MEDICINE TYPES =====
 router.get("/medicine-types", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM medicine_types ORDER BY name"
-    );
-    res.json(result.rows);
+    const result = await db.select().from(medicineTypes).orderBy(asc(medicineTypes.name));
+    res.json(result);
   } catch (error) {
     console.error("Error fetching medicine types:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -305,12 +369,17 @@ router.post("/medicine-types", async (req, res) => {
       return res.status(400).json({ message: "Medicine name is required" });
     }
 
-    const result = await pool.query(
-      "INSERT INTO medicine_types (name, icon, description, requires_refrigeration) VALUES ($1, $2, $3, $4) RETURNING *",
-      [name, icon, description, requires_refrigeration || false]
-    );
+    const result = await db
+      .insert(medicineTypes)
+      .values({
+        name,
+        icon,
+        description,
+        requiresRefrigeration: requires_refrigeration || false,
+      })
+      .returning();
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result[0]);
   } catch (error) {
     if (error.code === "23505") {
       return res.status(409).json({ message: "Medicine type already exists" });
@@ -325,16 +394,23 @@ router.put("/medicine-types/:id", async (req, res) => {
     const { id } = req.params;
     const { name, icon, description, requires_refrigeration } = req.body;
 
-    const result = await pool.query(
-      "UPDATE medicine_types SET name = COALESCE($1, name), icon = COALESCE($2, icon), description = COALESCE($3, description), requires_refrigeration = COALESCE($4, requires_refrigeration) WHERE id = $5 RETURNING *",
-      [name, icon, description, requires_refrigeration, id]
-    );
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (icon !== undefined) updateData.icon = icon;
+    if (description !== undefined) updateData.description = description;
+    if (requires_refrigeration !== undefined) updateData.requiresRefrigeration = requires_refrigeration;
 
-    if (result.rows.length === 0) {
+    const result = await db
+      .update(medicineTypes)
+      .set(updateData)
+      .where(eq(medicineTypes.id, id))
+      .returning();
+
+    if (result.length === 0) {
       return res.status(404).json({ message: "Medicine type not found" });
     }
 
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error) {
     console.error("Error updating medicine type:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -344,12 +420,12 @@ router.put("/medicine-types/:id", async (req, res) => {
 router.delete("/medicine-types/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      "DELETE FROM medicine_types WHERE id = $1 RETURNING *",
-      [id]
-    );
+    const result = await db
+      .delete(medicineTypes)
+      .where(eq(medicineTypes.id, id))
+      .returning();
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ message: "Medicine type not found" });
     }
 
@@ -363,8 +439,8 @@ router.delete("/medicine-types/:id", async (req, res) => {
 // ===== DRONES =====
 router.get("/drones", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM drones ORDER BY name");
-    res.json(result.rows);
+    const result = await db.select().from(drones).orderBy(asc(drones.name));
+    res.json(result);
   } catch (error) {
     console.error("Error fetching drones:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -380,19 +456,19 @@ router.post("/drones", async (req, res) => {
       return res.status(400).json({ message: "Drone name is required" });
     }
 
-    const result = await pool.query(
-      "INSERT INTO drones (name, model, battery_level, max_payload_kg, max_range_km, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [
+    const result = await db
+      .insert(drones)
+      .values({
         name,
         model,
-        battery_level || 100,
-        max_payload_kg || 5.0,
-        max_range_km || 50.0,
-        status || "available",
-      ]
-    );
+        batteryLevel: battery_level || 100,
+        maxPayloadKg: max_payload_kg || 5.0,
+        maxRangeKm: max_range_km || 50.0,
+        status: status || "available",
+      })
+      .returning();
 
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(result[0]);
   } catch (error) {
     if (error.code === "23505") {
       return res
@@ -410,16 +486,25 @@ router.put("/drones/:id", async (req, res) => {
     const { name, model, status, battery_level, max_payload_kg, max_range_km } =
       req.body;
 
-    const result = await pool.query(
-      "UPDATE drones SET name = COALESCE($1, name), model = COALESCE($2, model), status = COALESCE($3, status), battery_level = COALESCE($4, battery_level), max_payload_kg = COALESCE($5, max_payload_kg), max_range_km = COALESCE($6, max_range_km) WHERE id = $7 RETURNING *",
-      [name, model, status, battery_level, max_payload_kg, max_range_km, id]
-    );
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (model !== undefined) updateData.model = model;
+    if (status !== undefined) updateData.status = status;
+    if (battery_level !== undefined) updateData.batteryLevel = battery_level;
+    if (max_payload_kg !== undefined) updateData.maxPayloadKg = max_payload_kg;
+    if (max_range_km !== undefined) updateData.maxRangeKm = max_range_km;
 
-    if (result.rows.length === 0) {
+    const result = await db
+      .update(drones)
+      .set(updateData)
+      .where(eq(drones.id, id))
+      .returning();
+
+    if (result.length === 0) {
       return res.status(404).json({ message: "Drone not found" });
     }
 
-    res.json(result.rows[0]);
+    res.json(result[0]);
   } catch (error) {
     console.error("Error updating drone:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -429,12 +514,12 @@ router.put("/drones/:id", async (req, res) => {
 router.delete("/drones/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      "DELETE FROM drones WHERE id = $1 RETURNING *",
-      [id]
-    );
+    const result = await db
+      .delete(drones)
+      .where(eq(drones.id, id))
+      .returning();
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return res.status(404).json({ message: "Drone not found" });
     }
 
